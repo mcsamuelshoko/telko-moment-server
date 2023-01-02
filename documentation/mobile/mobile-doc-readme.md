@@ -1,4 +1,4 @@
-# TELKO-MOMENT : `MOBILE-APP`
+# TELKO-MOMENT : `MOBILE-APP` 📱
 
 ## About
 

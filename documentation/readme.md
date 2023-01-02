@@ -1,13 +1,13 @@
-# TELKO-MOMENT-PROJECT
+# TELKO-MOMENT-PROJECT 🗄
 
-## Bio
+## Bio 💁
 
->  we're just a couple of college kids that wanted to get a hold of flutter and also get to use nodejs and most of the architectures in this book on something that ***'works-in-production'***.
+>  we're just a couple of college kids that wanted to get a hold of flutter and also get to use nodejs and some multi-service architectures  on something that ***'works-in-production'***.
 >  So we just rallied ourselves and then started a project (_this project_) so that wwe could boost our skills. We also wish to use a few if not all (_if possible_) good software engineering principles to have a good understanding of how they work, experience then also and see them in action.
 
-## Branch-strategy
+## Branch-strategy 🌳
 
-> Since the project is quite small and we also have a small team, we found nothing bad in having to use the **GitHub Flow Branch Strategy**.
+> Since the project is quite small and we also have a small team, we found suitable to have to use the **GitHub Flow Branch Strategy**.
 > - Putting it in simple words, the **github flow branch strategy** has a ***main-branch*** that is branched off by a ***feature-branch*** whenever there is a new feature being implemented.
 > - The ***feature-branch*** will then be merged back with the ***main-branch*** whenever the said feature has been completed, checked and ready for implementation.
 > - but as for us we will be tweaking the branching strategy to have an **Extended GitHub Flow Branch Strategy**.
@@ -17,7 +17,7 @@
 > - The branching strategy is quite nice and simple :) .
 
 
-## Description
+## Description 🛈
 
 > - server and mobile-app for a chat-app.
 > - it depends on sockets _(over stomp protocol)_ and rest-API for serving messages and files.
@@ -29,15 +29,15 @@
 
 
 
-## Databases
+## Databases 💾
 
 > - we mostly wanted to have a grasp and also lie in the _'safety net'_ of a NoSql database since you could escape _'scar free'_ when you all of a sudden change a schema and also even in production as there would be lesser overhead as compared to a SQL database.
-> Besides the safety net, we also wanted to have a better understanding of the NoSql database(s) by using them in a fairly _'larger'_ app compared to our apps that we mostly develop in school due to the smaller deadlines, lazybones in teams XD and other reasons to make me convince you that the project will be small.
+> Besides the safety net, we also wanted to have a better understanding of the NoSql database(s) by using them in a fairly _'larger'_ app compared to our apps that we mostly develop in school due to the smaller deadlines, lazybones in teams 😅 and other reasons to make me convince you that the project will be small.
 
-## Softwares
+## Softwares 💻
 
 > These are the softwares that we will be using in this project.
-> Most of them will be for adding productivity and others for improving _quality of life_ as we work on the project.
+> Most of them will be for adding productivity and others for improving _quality of life_ as we work on the project, although the plugins are not compulsory just in case you have an alternative in mind.
 
 > The list is as follows :
  1. VisualStudio-Code 
