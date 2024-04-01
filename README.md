@@ -1,5 +1,13 @@
 # telko-moment-server 🖥
 
+
+> - Server to a maui mobile app for android chat-app.
+> - The server uses gin from golang
+
+
+
+---
+> [OLD PLAN]
 ## About
 
 > - Server to a flutter android chat-app.
@@ -26,3 +34,5 @@
     2.  SQLite (mobile)
 7.  RabbitMQ
     - stomp plugin
+
+
