@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -34,8 +34,9 @@ func main() {
 		})
 	})
 
-	var httpPort int = 8080
-	fmt.Println("Listening on port :" + strconv.Itoa(httpPort))
+	var portNum int = 8080
+	var httpPort string = ":" + strconv.Itoa(portNum)
+	log.Println("Listening on port :" + strconv.Itoa(portNum))
 
-	r.Run(":" + strconv.Itoa(httpPort)) // listen and serve on 0.0.0.0:8080
+	r.Run(httpPort) // listen and serve on 0.0.0.0:8080
 }
