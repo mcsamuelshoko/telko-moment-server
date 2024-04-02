@@ -1,4 +1,10 @@
-# TELKO-MOMENT :  `SERVER-APP` 🖥
+# TELKO-MOMENT :  `SERVER-APP` 🌫️🖥🌫️
+
+
+<details>
+<summary> <code><b>🌳 Old/first project idea plan</b></code></summary>
+
+
 
 ## About
 
@@ -86,3 +92,10 @@ $ npm install express --save
 $ npm i @stomp/stompjs
 ```
 
+</details>
+
+
+## Databases
+
+### `Postgres`
+### `Mongodb`
