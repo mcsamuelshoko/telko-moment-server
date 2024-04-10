@@ -7,8 +7,17 @@
 
 
 ---
+
+
+<details>
+
+<summary>
+
 > [OLD PLAN]
-## About
+
+</summary>
+
+<h2>About</h2> 
 
 > - Server to a flutter android chat-app.
 > - The server uses nodejs and frameworks such as ExpressJs, featherJs, stompjs & Prisma ORM.
@@ -36,3 +45,26 @@
     - stomp plugin
 
 
+</details>
+
+
+## Folder Structure
+
+    /
+    ├───design/
+    ├───documentation/
+    │   ├───mobile/
+    │   └───server/
+    └───server/
+        ├───bin/
+        ├───cmd/
+        ├───configs/
+        ├───internal/
+        │   ├───audios/
+        │   ├───auth/
+        │   ├───messages/
+        │   ├───pictures/
+        │   ├───users/
+        │   └───videos/
+        ├───pkg/
+        └───test/
