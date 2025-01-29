@@ -1,10 +1,11 @@
->#### `I'll design a Domain-Driven Design (DDD) structure for TellMe,`
->
->#### `breaking down the different bounded contexts and their relationships.`
+    I'll design a Domain-Driven Design (DDD) structure for TellMe,
+    breaking down the different bounded contexts and their relationships.
 
-Core Domains:
+---
 
-1. Customer Service Core
+### `Core Domains:`
+
+1. `Customer Service Core`
    - Aggregate Roots:
      - Conversation
      - Ticket
@@ -19,7 +20,7 @@ Core Domains:
      - ResponseTime
      - CustomerSegment
 
-2. Integration Hub
+2. `Integration Hub`
    - Aggregate Roots:
      - Channel
      - PlatformConnection
@@ -31,7 +32,7 @@ Core Domains:
      - ConnectionStatus
      - APICredentials
 
-3. Analytics & Segmentation
+3. `Analytics & Segmentation`
    - Aggregate Roots:
      - CustomerSegment
      - AnalyticsReport
@@ -44,7 +45,7 @@ Core Domains:
      - AnalyticsPeriod
      - MetricValue
 
-4. Enterprise Management
+4. `Enterprise Management`
    - Aggregate Roots:
      - Department
      - Team
@@ -58,16 +59,20 @@ Core Domains:
      - TeamCapacity
      - ServiceLevel
 
-Departments & Their Domains:
+<br/>
 
-1. Customer Support Department
+---
+
+### `Departments & Their Domains:`
+
+1. `Customer Support Department`
    - Primary Domain: Customer Service Core
    - Responsibilities:
      - Direct customer interaction
      - Ticket management
      - Service quality monitoring
 
-2. IT/Technical Department
+2. `IT/Technical Department`
    - Primary Domain: Integration Hub
    - Responsibilities:
      - Platform integrations
@@ -75,7 +80,7 @@ Departments & Their Domains:
      - Technical support
      - API management
 
-3. Analytics Department
+3. `Analytics Department`
    - Primary Domain: Analytics & Segmentation
    - Responsibilities:
      - Customer segmentation
@@ -83,54 +88,60 @@ Departments & Their Domains:
      - Trend analysis
      - Reporting
 
-4. Operations Department
+4. `Operations Department`
    - Primary Domain: Enterprise Management
    - Responsibilities:
      - Resource allocation
      - Team management
      - Process optimization
 
-5. Sales & Marketing Department
+5. `Sales & Marketing Department`
    - Supporting All Domains
    - Responsibilities:
      - Customer acquisition
      - Market analysis
      - Product promotion
 
-Bounded Contexts:
+<br/>
 
-1. Support Context
+---
+
+### `Bounded Contexts:`
+
+1. `Support Context`
    - Manages active conversations
    - Handles ticket lifecycle
    - Customer interaction history
 
-2. Integration Context
+2. `Integration Context`
    - Channel management
    - Platform synchronization
    - API gateway
 
-3. Analytics Context
+3. `Analytics Context`
    - Customer segmentation
    - Performance metrics
    - Reporting engine
 
-4. Management Context
+4. `Management Context`
    - Team organization
    - Resource allocation
    - Access control
 
-Context Mappings:
+<br/>
 
-1. Support ↔ Integration
+---
+
+### `Context Mappings:`
+
+1. `Support ↔ Integration`
    - Shared Kernel: Message routing
    - Anti-corruption Layer: Channel adapters
 
-2. Support ↔ Analytics
+2. `Support ↔ Analytics`
    - Partnership: Customer data sharing
    - Conformist: Segmentation rules
 
-3. Management ↔ Support
+3. `Management ↔ Support`
    - Customer/Supplier: Resource allocation
    - Open Host Service: Team availability
-
-Would you like me to elaborate on any specific domain, their relationships, or dive deeper into the technical implementation details?
