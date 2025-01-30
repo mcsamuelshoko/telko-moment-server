@@ -11,5 +11,5 @@ func main() {
 		return c.SendString("Hello, World!")
 	})
 
-	app.Listen("8080")
+	app.Listen(":8080")
 }
