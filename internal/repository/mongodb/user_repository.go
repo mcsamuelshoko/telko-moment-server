@@ -41,13 +41,32 @@ func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, e
 }
 
 func (u userRepository) List(ctx context.Context, page, limit int) ([]models.User, error) {
-	cursor, err := u.Collection.Find(ctx, bson.M{})
-	var users []models.User
-	if err = cursor.All(ctx, &users); err != nil {
-		log.Error().Err(err).Msg("failed to list users")
+	// Calculate how many documents to skip
+	skip := (page - 1) * limit
+
+	// Create options with pagination parameters
+	findOptions := options.Find().
+		SetSkip(int64(skip)).
+		SetLimit(int64(limit))
+
+	// Execute the find operation with options
+	cursor, err := u.Collection.Find(ctx, bson.M{}, findOptions)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to query users")
 		return nil, err
 	}
-	return users, err
+
+	// Don't forget to close the cursor when we're done
+	defer cursor.Close(ctx)
+
+	// Parse all the documents
+	var users []models.User
+	if err = cursor.All(ctx, &users); err != nil {
+		log.Error().Err(err).Msg("failed to decode users")
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (u userRepository) Update(ctx context.Context, user *models.User) error {
@@ -61,8 +80,6 @@ func (u userRepository) Update(ctx context.Context, user *models.User) error {
 	// Execute the update operation
 	_, err := u.Collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		// Using log.Error() instead of log.Panic() is better for production code
-		// as Panic will crash your application
 		log.Error().Err(err).Msg("failed to update user with id: " + user.Id.String())
 		return err
 	}
