@@ -3,7 +3,7 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Enterprise struct {
-	enterpriseId       primitive.ObjectID
+	Id                 primitive.ObjectID
 	name               string
 	enterpriseOwner    []primitive.ObjectID
 	websiteUrl         string

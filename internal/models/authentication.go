@@ -5,7 +5,7 @@ import (
 )
 
 type Authentication struct {
-	userId       primitive.ObjectID // (references users collection)
+	Id           primitive.ObjectID // (references users collection)
 	email        string             //(unique)
 	passwordHash string
 	refreshToken string

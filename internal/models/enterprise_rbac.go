@@ -3,7 +3,7 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type EnterpriseRBAC struct {
-	roleId        primitive.ObjectID //(unique, primary key)
+	Id            primitive.ObjectID //(unique, primary key)
 	roleName      string             //(e.g., admin, user, manager)
 	enterpriseId  primitive.ObjectID
 	permissions   string               //(list of permissions like read, write, delete, etc.)

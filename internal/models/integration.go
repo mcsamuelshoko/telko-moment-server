@@ -3,7 +3,7 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Integration struct {
-	integrationId   primitive.ObjectID //(unique, primary key)
+	Id              primitive.ObjectID //(unique, primary key)
 	name            string             //(e.g., Google Drive, Slack)
 	userId          primitive.ObjectID //(references users collection)
 	integrationType string             //(OAuth, Webhook, etc.)

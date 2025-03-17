@@ -3,7 +3,7 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Call struct {
-	callId           primitive.ObjectID   //(unique, primary key)
+	Id               primitive.ObjectID   //(unique, primary key)
 	callerId         primitive.ObjectID   //(references users collection)
 	receiverId       []primitive.ObjectID //(references users collection)
 	callType         string               //(audio, video)
