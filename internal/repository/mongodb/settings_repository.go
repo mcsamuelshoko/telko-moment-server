@@ -20,8 +20,8 @@ func NewSettingsRepository(db *mongo.Database) repository.SettingsRepository {
 	}
 }
 
-func (u settingsRepository) Create(ctx context.Context, settings *models.Settings) error {
-	_, err := u.Collection.InsertOne(ctx, settings)
+func (s settingsRepository) Create(ctx context.Context, settings *models.Settings) error {
+	_, err := s.Collection.InsertOne(ctx, settings)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create settings")
 		return err
@@ -29,9 +29,9 @@ func (u settingsRepository) Create(ctx context.Context, settings *models.Setting
 	return nil
 }
 
-func (u settingsRepository) GetByID(ctx context.Context, id string) (*models.Settings, error) {
+func (s settingsRepository) GetByID(ctx context.Context, id string) (*models.Settings, error) {
 	settings := &models.Settings{}
-	err := u.Collection.FindOne(ctx, bson.M{"id": id}).Decode(settings)
+	err := s.Collection.FindOne(ctx, bson.M{"id": id}).Decode(settings)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to find settings with id: " + id)
 		return nil, err
@@ -40,7 +40,7 @@ func (u settingsRepository) GetByID(ctx context.Context, id string) (*models.Set
 
 }
 
-func (u settingsRepository) List(ctx context.Context, page, limit int) ([]models.Settings, error) {
+func (s settingsRepository) List(ctx context.Context, page, limit int) ([]models.Settings, error) {
 	// Calculate how many documents to skip
 	skip := (page - 1) * limit
 
@@ -50,7 +50,7 @@ func (u settingsRepository) List(ctx context.Context, page, limit int) ([]models
 		SetLimit(int64(limit))
 
 	// Execute the find operation with options
-	cursor, err := u.Collection.Find(ctx, bson.M{}, findOptions)
+	cursor, err := s.Collection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to query settings")
 		return nil, err
@@ -69,16 +69,16 @@ func (u settingsRepository) List(ctx context.Context, page, limit int) ([]models
 	return settingsList, nil
 }
 
-func (u settingsRepository) Update(ctx context.Context, settings *models.Settings) error {
+func (s settingsRepository) Update(ctx context.Context, settings *models.Settings) error {
 	// Use the _id field from the settings model for the filter
 	// Create an update document with $set to update the settings fields
 	// Specify the options
 	filter := bson.D{{"_id", settings.Id}}
 	update := bson.D{{"$set", settings}}
-	opts := options.Update().SetUpsert(true)
+	opts := options.Update().SetUpsert(false)
 
 	// Execute the update operation
-	_, err := u.Collection.UpdateOne(ctx, filter, update, opts)
+	_, err := s.Collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update settings with id: " + settings.Id.String())
 		return err
@@ -87,8 +87,8 @@ func (u settingsRepository) Update(ctx context.Context, settings *models.Setting
 	return nil
 }
 
-func (u settingsRepository) Delete(ctx context.Context, id string) error {
-	_, err := u.Collection.DeleteOne(ctx, id)
+func (s settingsRepository) Delete(ctx context.Context, id string) error {
+	_, err := s.Collection.DeleteOne(ctx, id)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete settings with id: " + id)
 		return err
