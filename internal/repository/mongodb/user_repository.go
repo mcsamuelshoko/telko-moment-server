@@ -40,6 +40,26 @@ func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, e
 
 }
 
+func (u userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
+	user := &models.User{}
+	err := u.Collection.FindOne(ctx, bson.M{"email": email}).Decode(user)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find user with email: " + email)
+		return nil, err
+	}
+	return user, nil
+}
+
+func (u userRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
+	user := &models.User{}
+	err := u.Collection.FindOne(ctx, bson.M{"username": username}).Decode(user)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find user with username: " + username)
+		return nil, err
+	}
+	return user, nil
+}
+
 func (u userRepository) List(ctx context.Context, page, limit int) ([]models.User, error) {
 	// Calculate how many documents to skip
 	skip := (page - 1) * limit
