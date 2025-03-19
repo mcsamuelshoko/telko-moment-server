@@ -4,9 +4,17 @@ import (
 	"context"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
+
+type userService interface {
+	CreateUser(ctx context.Context, user *models.User) error
+	GetUserByID(ctx context.Context, id string) (*models.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	ListUsers(ctx context.Context, page, limit int) ([]models.User, error)
+	UpdateUser(ctx context.Context, user *models.User) error
+	DeleteUser(ctx context.Context, id string) error
+}
 
 type UserService struct {
 	repo repository.UserRepository
@@ -19,9 +27,9 @@ func NewUserService(repo repository.UserRepository) *UserService {
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
-	// Add business logic here
-	user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
-	user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+	//// Add business logic here
+	//user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+	//user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	return s.repo.Create(ctx, user)
 }

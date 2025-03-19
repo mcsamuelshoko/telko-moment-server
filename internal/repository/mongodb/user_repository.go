@@ -6,6 +6,7 @@ import (
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -30,8 +31,16 @@ func (u userRepository) Create(ctx context.Context, user *models.User) error {
 }
 
 func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
+	// user ID to search for
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert id to object id")
+		log.Debug().Err(err).Msg("failed to convert id:" + id)
+		return nil, err
+	}
+
 	user := &models.User{}
-	err := u.Collection.FindOne(ctx, bson.M{"id": id}).Decode(user)
+	err = u.Collection.FindOne(ctx, bson.M{"_id": userID}).Decode(user)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to find user with id: " + id)
 		return nil, err
@@ -108,7 +117,15 @@ func (u userRepository) Update(ctx context.Context, user *models.User) error {
 }
 
 func (u userRepository) Delete(ctx context.Context, id string) error {
-	_, err := u.Collection.DeleteOne(ctx, id)
+	// user ID to search for
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert id to object id")
+		log.Debug().Err(err).Msg("failed to convert id:" + id)
+		return err
+	}
+
+	_, err = u.Collection.DeleteOne(ctx, bson.M{"_id": userID})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete user with id: " + id)
 		return err
