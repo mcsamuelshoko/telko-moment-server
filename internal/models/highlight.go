@@ -3,9 +3,9 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Highlight struct {
-	Id        primitive.ObjectID //(unique, primary key)
-	userId    primitive.ObjectID //(references users collection)
-	quote     string             //(references messages collection)
-	item      string             //(e.g., pinned, favorite)
-	timestamp primitive.DateTime
+	Id        primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	UserId    primitive.ObjectID `json:"userId" bson:"userId"`
+	Quote     string             `json:"quote" bson:"quote"`
+	Item      string             `json:"item" bson:"item"`
+	Timestamp primitive.DateTime `json:"timestamp" bson:"timestamp"`
 }
