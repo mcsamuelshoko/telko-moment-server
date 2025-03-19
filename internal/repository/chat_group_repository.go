@@ -10,5 +10,6 @@ type ChatGroupRepository interface {
 	GetByID(ctx context.Context, id string) (*models.ChatGroup, error)
 	List(ctx context.Context, page, limit int) ([]models.ChatGroup, error)
 	Update(ctx context.Context, chatGroup *models.ChatGroup) error
+	UpdateWithFilter(ctx context.Context, chatGroupId string, updateData map[string]interface{}) error
 	Delete(ctx context.Context, id string) error
 }

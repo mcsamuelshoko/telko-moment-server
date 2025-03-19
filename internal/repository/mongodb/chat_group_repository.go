@@ -6,6 +6,7 @@ import (
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -30,8 +31,16 @@ func (c chatGroupRepository) Create(ctx context.Context, chatGroup *models.ChatG
 }
 
 func (c chatGroupRepository) GetByID(ctx context.Context, id string) (*models.ChatGroup, error) {
+	// chat group ID to search for
+	cgID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert id to object id")
+		log.Debug().Err(err).Msg("failed to convert id:" + id)
+		return nil, err
+	}
+
 	chatGroup := &models.ChatGroup{}
-	err := c.Collection.FindOne(ctx, bson.M{"id": id}).Decode(chatGroup)
+	err = c.Collection.FindOne(ctx, bson.M{"_id": cgID}).Decode(chatGroup)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to find chat_group with id: " + id)
 		return nil, err
@@ -56,6 +65,26 @@ func (c chatGroupRepository) List(ctx context.Context, page, limit int) ([]model
 	return chatGroups, nil
 }
 
+func (c chatGroupRepository) UpdateWithFilter(ctx context.Context, chatGroupId string, updateData map[string]interface{}) error {
+	objectID, err := primitive.ObjectIDFromHex(chatGroupId)
+	if err != nil {
+		log.Error().Err(err).Msg("invalid chat group ID format")
+		return err
+	}
+
+	bsonUpdate := bson.M{}
+	for key, value := range updateData {
+		bsonUpdate[key] = value
+	}
+
+	_, err = c.Collection.UpdateOne(ctx, bson.M{"_id": objectID}, bson.M{"$set": bsonUpdate})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update chat_group")
+		return err
+	}
+	return nil
+}
+
 func (c chatGroupRepository) Update(ctx context.Context, chatGroup *models.ChatGroup) error {
 	filter := bson.M{"id": chatGroup.Id}
 	update := bson.M{"$set": bson.M{}}
@@ -68,7 +97,15 @@ func (c chatGroupRepository) Update(ctx context.Context, chatGroup *models.ChatG
 }
 
 func (c chatGroupRepository) Delete(ctx context.Context, id string) error {
-	_, err := c.Collection.DeleteOne(ctx, bson.M{"id": id})
+	// chat group ID to search for
+	cgID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert id to object id")
+		log.Debug().Err(err).Msg("failed to convert id:" + id)
+		return err
+	}
+
+	_, err = c.Collection.DeleteOne(ctx, bson.M{"_id": cgID})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete chat_group with id: " + id)
 		return err
