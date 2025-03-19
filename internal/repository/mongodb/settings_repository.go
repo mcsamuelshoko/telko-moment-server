@@ -6,6 +6,7 @@ import (
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -30,14 +31,40 @@ func (s settingsRepository) Create(ctx context.Context, settings *models.Setting
 }
 
 func (s settingsRepository) GetByID(ctx context.Context, id string) (*models.Settings, error) {
+	// settings ID to search for
+	settingsID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert settings id to object id")
+		log.Debug().Err(err).Msg("failed to convert GetByID id:" + id)
+		return nil, err
+	}
+
 	settings := &models.Settings{}
-	err := s.Collection.FindOne(ctx, bson.M{"id": id}).Decode(settings)
+	err = s.Collection.FindOne(ctx, bson.M{"_id": settingsID}).Decode(settings)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to find settings with id: " + id)
 		return nil, err
 	}
 	return settings, nil
 
+}
+
+func (s settingsRepository) GetByUserID(ctx context.Context, userId string) (*models.Settings, error) {
+	// user ID to search for
+	userID, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert userId to object id")
+		log.Debug().Err(err).Msg("failed to convert GetByUserID id:" + userId)
+		return nil, err
+	}
+
+	settings := &models.Settings{}
+	err = s.Collection.FindOne(ctx, bson.M{"userId": userID}).Decode(settings)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to find settings with id: " + userId)
+		return nil, err
+	}
+	return settings, nil
 }
 
 func (s settingsRepository) List(ctx context.Context, page, limit int) ([]models.Settings, error) {
@@ -57,7 +84,12 @@ func (s settingsRepository) List(ctx context.Context, page, limit int) ([]models
 	}
 
 	// Don't forget to close the cursor when we're done
-	defer cursor.Close(ctx)
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err := cursor.Close(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to close cursor")
+		}
+	}(cursor, ctx)
 
 	// Parse all the documents
 	var settingsList []models.Settings
@@ -88,7 +120,14 @@ func (s settingsRepository) Update(ctx context.Context, settings *models.Setting
 }
 
 func (s settingsRepository) Delete(ctx context.Context, id string) error {
-	_, err := s.Collection.DeleteOne(ctx, id)
+	// settings ID to search for
+	settingsID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to convert Settings, Delete id to object id")
+		log.Debug().Err(err).Msg("failed to convert Settings Delete id:" + id)
+		return err
+	}
+	_, err = s.Collection.DeleteOne(ctx, bson.M{"_id": settingsID})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete settings with id: " + id)
 		return err
