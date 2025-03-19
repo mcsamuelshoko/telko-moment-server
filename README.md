@@ -1,19 +1,31 @@
 # telko-moment-server 🖥
 
-
 > - Server to a maui mobile app for android chat-app.
-> - The server uses gin from golang
+> - The server uses fiber for golang
 
+- [<https://gofiber.io/>]
 
+- [<https://github.com/gofiber/awesome-fiber>]
+- [<https://docs.gofiber.io/recipes/>]
 
 ---
 
+- REST APIs [<https://www.ibm.com/think/topics/rest-apis>]
+- Api Management [<https://www.ibm.com/think/topics/api-management>]
+
+---
+
+- AIs used in making this app
+  - Claude 3.5 & 3.6 (anthropic) ⭐⭐⭐⭐⭐
+  - Gemini (google)              ⭐⭐⭐
+
+---
 
 <details>
 
 <summary>
 
-> [OLD PLAN]
+> **[ ORIGINAL/OLD PLAN ]**
 
 </summary>
 
@@ -22,31 +34,30 @@
 > - Server to a flutter android chat-app.
 > - The server uses nodejs and frameworks such as ExpressJs, featherJs, stompjs & Prisma ORM.
 > - it is split into 2 different servers
->   1.   **chat-server** :   for handling chats
->   2.   **media-server** :  for handling media files or basically files
+>   1. **chat-server** :   for handling chats
+>   2. **media-server** :  for handling media files or basically files
 > - _*more information on this will be found in the documentation folder_
 > - figma links for the designs:
->   1.  **user maps & personas:**   &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/SBMlL6FtJD69ajJFPGJToU/Telko-moment-%7C-user-map-%26-User-personas?t=eWpYCmGxitRb2tc7-1)
->   2.  **wire frame & prototype**  &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/ZuSQwcxKaC3hUuFuSnsCqK/Telko-moment-%7C-wireframe-%26-Prototype?t=eWpYCmGxitRb2tc7-1)
+>   1. **user maps & personas:**   &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/SBMlL6FtJD69ajJFPGJToU/Telko-moment-%7C-user-map-%26-User-personas?t=eWpYCmGxitRb2tc7-1)
+>   2. **wire frame & prototype**  &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/ZuSQwcxKaC3hUuFuSnsCqK/Telko-moment-%7C-wireframe-%26-Prototype?t=eWpYCmGxitRb2tc7-1)
 
 ## Requirements
 
 > Most of the server requirements are mostly javascript based and a few are other languages but mostly for supporting architecture.
 > The requirements are as follows:
-1.  Nodejs & NPM(Node Package Manager)
-2.  ExpressJs
-3.  FeathersJs
-4.  Stompjs
-5.  Prisma
-6.  Databases
-    1.  Mongodb (server)
-    2.  SQLite (mobile)
-7.  RabbitMQ
+
+1. Nodejs & NPM(Node Package Manager)
+2. ExpressJs
+3. FeathersJs
+4. Stompjs
+5. Prisma
+6. Databases
+    1. Mongodb (server)
+    2. SQLite (mobile)
+7. RabbitMQ
     - stomp plugin
 
-
 </details>
-
 
 ## Folder Structure
 
@@ -73,10 +84,7 @@
 
 <br/>
 
-
 >## `The conventional Go project structure.`
-
-
 
 ```plaintext
 chat-app/
@@ -141,8 +149,15 @@ Each directory and its purpose:
 6. `migrations/`: Database migration files
 
 This structure follows these key Go principles:
+
 - Separation of concerns
 - Clear dependency direction (dependencies flow inward)
 - Package-by-feature rather than package-by-layer
 - Private application code in `internal/`
 - Shared code in `pkg/`
+
+---
+
+### Packages
+
+- fiberi18n: [<https://github.com/gofiber/contrib/tree/main/fiberi18n>]
