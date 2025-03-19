@@ -9,6 +9,7 @@ type ChatRepository interface {
 	Create(ctx context.Context, chat *models.Chat) error
 	GetByID(ctx context.Context, id string) (*models.Chat, error)
 	List(ctx context.Context, page, limit int) ([]models.Chat, error)
+	ListByUserId(ctx context.Context, id string, page, limit int) ([]models.Chat, error)
 	Update(ctx context.Context, chat *models.Chat) error
 	Delete(ctx context.Context, id string) error
 }
