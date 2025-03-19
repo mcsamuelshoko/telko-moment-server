@@ -3,12 +3,12 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Media struct {
-	Id              primitive.ObjectID //(unique, primary key)
-	chatId          primitive.ObjectID //(references chats collection)
-	senderId        primitive.ObjectID //(references users collection)
-	mediaType       string             //(image, audio, video, document, etc.)
-	fileName        string
-	fileSize        int
-	mediaUrl        string //(URL to the media file)
-	uploadTimestamp primitive.DateTime
+	Id              primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ChatId          primitive.ObjectID `json:"chatId" bson:"chatId"`
+	SenderId        primitive.ObjectID `json:"senderId" bson:"senderId"`
+	MediaType       string             `json:"mediaType" bson:"mediaType"`
+	FileName        string             `json:"fileName" bson:"fileName"`
+	FileSize        int                `json:"fileSize" bson:"fileSize"`
+	MediaUrl        string             `json:"mediaUrl" bson:"mediaUrl"`
+	UploadTimestamp primitive.DateTime `json:"uploadTimestamp" bson:"uploadTimestamp"`
 }
