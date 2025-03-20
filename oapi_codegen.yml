@@ -1,0 +1,1523 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Telco-MS Messenger API
+  description: API for managing messenger functionality for Telco-MS.
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    get:
+      summary: Get all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /users/{userId}:
+    get:
+      summary: Get a user by ID
+      operationId: getUserById
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    put:
+      summary: Update a user
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    delete:
+      summary: Delete a user
+      operationId: deleteUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /chats:
+    post:
+      summary: Create a new chat
+      operationId: createChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCreateRequest'
+      responses:
+        '201':
+          description: Chat created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    get:
+      summary: Get all chats
+      operationId: getAllChats
+      responses:
+        '200':
+          description: List of chats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chat'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /chats/{chatId}:
+    get:
+      summary: Get a chat by ID
+      operationId: getChatById
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chat details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+        '404':
+          description: Chat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    put:
+      summary: Update a chat
+      operationId: updateChat
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatUpdateRequest'
+      responses:
+        '200':
+          description: Chat updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '404':
+          description: Chat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    delete:
+      summary: Delete a chat
+      operationId: deleteChat
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Chat deleted successfully
+        '404':
+          description: Chat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /messages:
+    post:
+      summary: Send a new message
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreateRequest'
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    get:
+      summary: Get messages for a chat
+      operationId: getMessagesByChatId
+      parameters:
+        - name: chatId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The ID of the chat to retrieve messages from.
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /messages/{messageId}:
+    get:
+      summary: Get a message by ID
+      operationId: getMessageById
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Message details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    put:
+      summary: Update a message
+      operationId: updateMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageUpdateRequest'
+      responses:
+        '200':
+          description: Message updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    delete:
+      summary: Delete a message
+      operationId: deleteMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Message deleted successfully
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /media:
+    post:
+      summary: Upload media
+      operationId: uploadMedia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MediaUploadRequest'
+      responses:
+        '201':
+          description: Media uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /media/{mediaId}:
+    get:
+      summary: Get media by ID
+      operationId: getMediaById
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    delete:
+      summary: Delete media
+      operationId: deleteMedia
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Media deleted successfully
+        '404':
+          description: Media not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /chatgroups:
+    post:
+      summary: Create a new chat group
+      operationId: createChatGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatGroupCreateRequest'
+      responses:
+        '201':
+          description: Chat group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatGroup'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    get:
+      summary: Get all chat groups
+      operationId: getAllChatGroups
+      responses:
+        '200':
+          description: List of chat groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatGroup'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /chatgroups/{chatGroupId}:
+    get:
+      summary: Get a chat group by ID
+      operationId: getChatGroupById
+      parameters:
+        - name: chatGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chat group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatGroup'
+        '404':
+          description: Chat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    put:
+      summary: Update a chat group
+      operationId: updateChatGroup
+      parameters:
+        - name: chatGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatGroupUpdateRequest'
+      responses:
+        '200':
+          description: Chat group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatGroup'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '404':
+          description: Chat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    delete:
+      summary: Delete a chat group
+      operationId: deleteChatGroup
+      parameters:
+        - name: chatGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Chat group deleted successfully
+        '404':
+          description: Chat group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /settings/{userId}:
+    get:
+      summary: Get user settings
+      operationId: getUserSettings
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '404':
+          description: Settings not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    put:
+      summary: Update user settings
+      operationId: updateUserSettings
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: User settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '404':
+          description: Settings not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+  /highlights:
+    post:
+      summary: Create a new highlight
+      operationId: createHighlight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Highlight'
+      responses:
+        '201':
+          description: Highlight created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Highlight'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+
+    get:
+      summary: Get all highlights
+      operationId: getAllHighlights
+      responses:
+        '200':
+          description: Returns all highlights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Highlight'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+
+  /highlights/{highlightId}:
+    get:
+      summary: Get highlight by ID
+      operationId: getHighlightById
+      parameters:
+        - name: highlightId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns highlight
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Highlight'
+        '404':
+          description: Highlight not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+
+    put:
+      summary: Update highlight by ID
+      operationId: updateHighlightById
+      parameters:
+        - name: highlightId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Highlight'
+      responses:
+        '200':
+          description: Returns updated highlight
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Highlight'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '404':
+          description: Highlight not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+    delete:
+      summary: Delete highlight by ID
+      operationId: deleteHighlightById
+      parameters:
+        - name: highlightId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Highlight deleted successfully
+        '404':
+          description: Highlight not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalResponses'
+components:
+  schemas:
+    GlobalResponses:
+      type: object
+      required:
+        - responseCode
+        - responseMessage
+      properties:
+        responseCode:
+          type: string
+          description: The response code.
+          example: "200"
+        responseMessage:
+          type: string
+          description: A human-readable message describing the response.
+          example: "Success"
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the user.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        firstName:
+          type: string
+          description: The first name of the user.
+          example: "John"
+        lastName:
+          type: string
+          description: The last name of the user.
+          example: "Doe"
+        username:
+          type: string
+          description: The username of the user.
+          example: "johndoe"
+        password:
+          type: string
+          description: The password of the user (hashed).  Write-only.
+          writeOnly: true
+          example: "hashed_password"
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          description: The phone number of the user.
+          example: "+15551234567"
+        userType:
+          type: string
+          description: The type of user.
+          example: "customer"
+        profilePicture:
+          type: string
+          description: URL to the user's profile picture.
+          format: uri
+          example: "https://example.com/profile.jpg"
+        status:
+          type: string
+          description: The status of the user.
+          example: "active"
+        bio:
+          type: string
+          description: A short biography of the user.
+          example: "Software Engineer"
+        languagePreference:
+          type: string
+          description: The user's preferred language.
+          example: "en"
+        timezone:
+          type: string
+          description: The user's timezone.
+          example: "America/New_York"
+        country:
+          type: string
+          description: The user's country.
+          example: "USA"
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the user was created.
+          example: "2024-01-20T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the user was last updated.
+          example: "2024-01-20T13:00:00Z"
+    UserCreateRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - username
+        - password
+        - email
+        - userType
+      properties:
+        firstName:
+          type: string
+          description: The first name of the user.
+          example: "John"
+        lastName:
+          type: string
+          description: The last name of the user.
+          example: "Doe"
+        username:
+          type: string
+          description: The username of the user.
+          example: "johndoe"
+        password:
+          type: string
+          description: The password of the user.
+          example: "password123"
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          description: The phone number of the user.
+          example: "+15551234567"
+        userType:
+          type: string
+          description: The type of user.
+          example: "customer"
+        profilePicture:
+          type: string
+          description: URL to the user's profile picture.
+          format: uri
+          example: "https://example.com/profile.jpg"
+        status:
+          type: string
+          description: The status of the user.
+          example: "active"
+        bio:
+          type: string
+          description: A short biography of the user.
+          example: "Software Engineer"
+        languagePreference:
+          type: string
+          description: The user's preferred language.
+          example: "en"
+        timezone:
+          type: string
+          description: The user's timezone.
+          example: "America/New_York"
+        country:
+          type: string
+          description: The user's country.
+          example: "USA"
+    UserUpdateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: The first name of the user.
+          example: "John"
+        lastName:
+          type: string
+          description: The last name of the user.
+          example: "Doe"
+        username:
+          type: string
+          description: The username of the user.
+          example: "johndoe"
+        password:
+          type: string
+          description: The password of the user.
+          example: "newpassword"
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          description: The phone number of the user.
+          example: "+15551234567"
+        userType:
+          type: string
+          description: The type of user.
+          example: "customer"
+        profilePicture:
+          type: string
+          description: URL to the user's profile picture.
+          format: uri
+          example: "https://example.com/profile.jpg"
+        status:
+          type: string
+          description: The status of the user.
+          example: "active"
+        bio:
+          type: string
+          description: A short biography of the user.
+          example: "Software Engineer"
+        languagePreference:
+          type: string
+          description: The user's preferred language.
+          example: "en"
+        timezone:
+          type: string
+          description: The user's timezone.
+          example: "America/New_York"
+        country:
+          type: string
+          description: The user's country.
+          example: "USA"
+    Chat:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the chat.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        participants:
+          type: array
+          items:
+            type: string
+            description: The ID of a participant in the chat.
+            example: "60a5a5a5a5a5a5a5a5a5a5a6"
+          description: The participants in the chat.
+        chatType:
+          type: string
+          description: The type of chat.
+          example: "direct"
+        chatName:
+          type: string
+          description: The name of the chat (for group chats).
+          example: "Team Project"
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the chat was created.
+          example: "2024-01-20T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the chat was last updated.
+          example: "2024-01-20T13:00:00Z"
+        lastMessageId:
+          type: string
+          description: The ID of the last message sent in the chat.
+          example: "60a5a5a5a5a5a5a5a5a5a5a7"
+    ChatCreateRequest:
+      type: object
+      required:
+        - participants
+        - chatType
+      properties:
+        participants:
+          type: array
+          items:
+            type: string
+            description: The ID of a participant to add to the chat.
+            example: "60a5a5a5a5a5a5a5a5a5a5a6"
+          description: The participants in the chat.
+        chatType:
+          type: string
+          description: The type of chat to create.
+          example: "direct"
+        chatName:
+          type: string
+          description: The name of the chat (for group chats).
+          example: "Team Project"
+    ChatUpdateRequest:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            type: string
+            description: The ID of a participant.
+            example: "60a5a5a5a5a5a5a5a5a5a5a6"
+          description: The participants in the chat.
+        chatType:
+          type: string
+          description: The type of chat.
+          example: "group"
+        chatName:
+          type: string
+          description: The name of the chat.
+          example: "New Team Name"
+        lastMessageId:
+          type: string
+          description: The ID of the last message sent in the chat.
+          example: "60b6b6b6b6b6b6b6b6b6b6b6"
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the message.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        chatId:
+          type: string
+          description: The ID of the chat the message belongs to.
+          example: "60a5a5a5a5a5a5a5a5a5a5a6"
+        senderId:
+          type: string
+          description: The ID of the user who sent the message.
+          example: "60a5a5a5a5a5a5a5a5a5a5a7"
+        messageType:
+          type: string
+          description: The type of message.
+          example: "text"
+        content:
+          type: string
+          description: The content of the message.
+          example: "Hello!"
+        mediaUrls:
+          type: array
+          items:
+            type: string
+            format: uri
+            description: URL to a media file.
+            example: "https://example.com/image.jpg"
+          description: URLs to any media files attached to the message.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date and time the message was sent.
+          example: "2024-01-20T12:00:00Z"
+        editedTimestamp:
+          type: string
+          format: date-time
+          description: The date and time the message was last edited.
+          example: "2024-01-20T13:00:00Z"
+        editedMessage:
+          type: boolean
+          description: Indicates if the message has been edited.
+          example: false
+        status:
+          type: string
+          description: The status of the message.
+          example: "sent"
+        mentions:
+          type: array
+          items:
+            type: string
+            description: The ID of a user mentioned in the message.
+            example: "60a5a5a5a5a5a5a5a5a5a5a8"
+          description: IDs of users mentioned in the message.
+        repliedToMessageId:
+          type: string
+          description: The ID of the message this message is a reply to.
+          example: "60a5a5a5a5a5a5a5a5a5a5a9"
+    MessageCreateRequest:
+      type: object
+      required:
+        - chatId
+        - senderId
+        - messageType
+      properties:
+        chatId:
+          type: string
+          description: The ID of the chat to send the message to.
+          example: "60a5a5a5a5a5a5a5a5a5a5a6"
+        senderId:
+          type: string
+          description: The ID of the user sending the message.
+          example: "60a5a5a5a5a5a5a5a5a5a5a7"
+        messageType:
+          type: string
+          description: The type of message.
+          example: "text"
+        content:
+          type: string
+          description: The content of the message. Required for text messages.
+          example: "Hello!"
+        mediaUrls:
+          type: array
+          items:
+            type: string
+            format: uri
+            description: URL to a media file.
+            example: "https://example.com/image.jpg"
+          description: URLs to any media files attached to the message.  Required for media messages.
+        mentions:
+          type: array
+          items:
+            type: string
+            description: The ID of a user to mention.
+            example: "60a5a5a5a5a5a5a5a5a5a5a8"
+          description: IDs of users mentioned in the message.
+        repliedToMessageId:
+          type: string
+          description: The ID of the message this message is a reply to.
+          example: "60a5a5a5a5a5a5a5a5a5a5a9"
+    MessageUpdateRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: The updated content of the message.
+          example: "Hello, world!"
+        mediaUrls:
+          type: array
+          items:
+            type: string
+            format: uri
+            description: URL to a media file.
+            example: "https://example.com/image.jpg"
+          description: URLs to any media files attached to the message.
+        status:
+          type: string
+          description: The status of the message.
+          example: "delivered"
+        mentions:
+          type: array
+          items:
+            type: string
+            description: The ID of a user to mention.
+            example: "60c6c6c6c6c6c6c6c6c6c6c6"
+          description: IDs of users mentioned in the message.
+        repliedToMessageId:
+          type: string
+          description: The ID of the message this message is a reply to.
+          example: "60d7d7d7d7d7d7d7d7d7d7d7"
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the media.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        chatId:
+          type: string
+          description: The ID of the chat the media is associated with.
+          example: "60a5a5a5a5a5a5a5a5a5a5a6"
+        senderId:
+          type: string
+          description: The ID of the user who sent the media.
+          example: "60a5a5a5a5a5a5a5a5a5a5a7"
+        mediaType:
+          type: string
+          description: The type of media.
+          example: "image"
+        fileName:
+          type: string
+          description: The name of the media file.
+          example: "image.jpg"
+        fileSize:
+          type: integer
+          description: The size of the media file in bytes.
+          example: 102400
+        mediaUrl:
+          type: string
+          format: uri
+          description: URL to the media file.
+          example: "https://example.com/image.jpg"
+        uploadTimestamp:
+          type: string
+          format: date-time
+          description: The date and time the media was uploaded.
+          example: "2024-01-20T12:00:00Z"
+    MediaUploadRequest:
+      type: object
+      required:
+        - chatId
+        - senderId
+        - mediaType
+        - file
+      properties:
+        chatId:
+          type: string
+          description: The ID of the chat the media is being uploaded to.
+          example: "60a5a5a5a5a5a5a5a5a5a5a6"
+        senderId:
+          type: string
+          description: The ID of the user uploading the media.
+          example: "60a5a5a5a5a5a5a5a5a5a5a7"
+        mediaType:
+          type: string
+          description: The type of media.
+          example: "image"
+        file:
+          type: string
+          format: binary
+          description: The media file to upload.
+    ChatGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the chat group.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        groupName:
+          type: string
+          description: The name of the chat group.
+          example: "Team A"
+        members:
+          type: array
+          items:
+            type: string
+            description: The ID of a member in the chat group.
+            example: "60a5a5a5a5a5a5a5a5a5a5a6"
+          description: The members of the chat group.
+        adminIds:
+          type: array
+          items:
+            type: string
+            description: The ID of an admin in the chat group.
+            example: "60a5a5a5a5a5a5a5a5a5a5a7"
+          description: The IDs of the admins of the chat group.
+        description:
+          type: string
+          description: A description of the chat group.
+          example: "Project Team A Chat"
+        profileUrl:
+          type: string
+          format: uri
+          description: URL to the chat group's profile picture.
+          example: "https://example.com/group.jpg"
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the chat group was created.
+          example: "2024-01-20T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the chat group was last updated.
+          example: "2024-01-20T13:00:00Z"
+        chatId:
+          type: string
+          description: The ID of the associated chat.
+          example: "60b6b6b6b6b6b6b6b6b6b6b6"
+    ChatGroupCreateRequest:
+      type: object
+      required:
+        - groupName
+        - members
+        - adminIds
+      properties:
+        groupName:
+          type: string
+          description: The name of the chat group.
+          example: "Team A"
+        members:
+          type: array
+          items:
+            type: string
+            description: The ID of a member to add.
+            example: "60a5a5a5a5a5a5a5a5a5a5a6"
+          description: The members of the chat group.
+        adminIds:
+          type: array
+          items:
+            type: string
+            description: The ID of an admin user.
+            example: "60a5a5a5a5a5a5a5a5a5a5a7"
+          description: The IDs of the admins of the chat group.
+        description:
+          type: string
+          description: A description of the chat group.
+          example: "Project Team A Chat"
+        profileUrl:
+          type: string
+          format: uri
+          description: URL to the chat group's profile picture.
+          example: "https://example.com/group.jpg"
+    ChatGroupUpdateRequest:
+      type: object
+      properties:
+        groupName:
+          type: string
+          description: The name of the chat group.
+          example: "New Team Name"
+        members:
+          type: array
+          items:
+            type: string
+            description: The ID of a member.
+            example: "60c6c6c6c6c6c6c6c6c6c6c6"
+          description: The members of the chat group.
+        adminIds:
+          type: array
+          items:
+            type: string
+            description: The ID of an admin user.
+            example: "60c7c7c7c7c7c7c7c7c7c7c7"
+          description: The IDs of the admins of the chat group.
+        description:
+          type: string
+          description: A description of the chat group.
+          example: "Updated Project Team A Chat"
+        profileUrl:
+          type: string
+          format: uri
+          description: URL to the chat group's profile picture.
+          example: "https://example.com/new_group.jpg"
+        chatId:
+          type: string
+          description: The ID of the associated chat.
+          example: "60d8d8d8d8d8d8d8d8d8d8d8"
+    Settings:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the settings.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        userId:
+          type: string
+          description: The ID of the user the settings belong to.
+          example: "60a5a5a5a5a5a5a5a5a5a5a6"
+        settings:
+          type: string
+          description: The user's settings (JSON string).
+          example: '{"notifications": {"email": true, "push": false}, "privacy": {"profile": "public"}}'
+        createdAt:
+          type: string
+          format: date-time
+          description: The date and time the settings were created.
+          example: "2024-01-20T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: The date and time the settings were last updated.
+          example: "2024-01-20T13:00:00Z"
+    Highlight:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the highlight.
+          example: "60a5a5a5a5a5a5a5a5a5a5a5"
+        userId:
+          type: string
+          description: The ID of the user who created the highlight.
+          example: "60a5a5a5a5a5a5a5a5a5a5a6"
+        quote:
+          type: string
+          description: The highlighted text.
+          example: "The quick brown fox jumps over the lazy dog."
+        item:
+          type: string
+          description: The item the highlight is from.
+          example: "Message"
+        timestamp:
+          type: string
+          format: date-time
+          description: The date and time the highlight was created.
+          example: "2024-01-20T12:00:00Z"
