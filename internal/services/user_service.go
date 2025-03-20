@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
+	"github.com/rs/zerolog"
 )
 
 type userService interface {
@@ -17,11 +18,13 @@ type userService interface {
 }
 
 type UserService struct {
+	log  *zerolog.Logger
 	repo repository.UserRepository
 }
 
-func NewUserService(repo repository.UserRepository) *UserService {
+func NewUserService(log *zerolog.Logger, repo repository.UserRepository) *UserService {
 	return &UserService{
+		log:  log,
 		repo: repo,
 	}
 }
