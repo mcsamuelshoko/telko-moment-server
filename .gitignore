@@ -50,3 +50,4 @@ go.work
 
 .idea
 .$*
+.env
