@@ -1,0 +1,12 @@
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: https://www.swagger.io/support
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: v1
+  title: Tellme messenger API
+paths: {}
+swagger: "2.0"
