@@ -4,7 +4,8 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type ChatGroup struct {
 	Id          primitive.ObjectID   `json:"id,omitempty" bson:"_id,omitempty"`
-	GroupName   string               `json:"groupName" bson:"groupName"`
+	Name        string               `json:"name" bson:"name"`
+	Type        string               `json:"type" bson:"type"`
 	Members     []primitive.ObjectID `json:"members" bson:"members"`
 	AdminIds    []primitive.ObjectID `json:"adminIds" bson:"adminIds"`
 	Description string               `json:"description,omitempty" bson:"description,omitempty"`
