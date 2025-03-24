@@ -4,10 +4,17 @@
 > - The server uses fiber for golang
 
 - [<https://gofiber.io/>]
+  - [<https://github.com/oapi-codegen/oapi-codegen#impl-fiber>]
+  - Open-API-Extensions [<https://github.com/oapi-codegen/oapi-codegen?tab=readme-ov-file#openapi-extensions>]
 
 - [<https://github.com/gofiber/awesome-fiber>]
 - [<https://docs.gofiber.io/recipes/>]
+- [<https://swagger.io/docs/specification/v3_0/about/>]
+  - [<https://medium.com/@fikihalan/a-practical-guide-to-using-oapi-codegen-in-golang-api-development-with-the-fiber-framework-bce2a59380ae>]
 
+---
+ Tools - [<https://42crunch.com/>]
+ OpenAPI Spec - [<https://swagger.io/docs/specification/v3_0/basic-structure/>]
 ---
 
 - REST APIs [<https://www.ibm.com/think/topics/rest-apis>]
@@ -17,9 +24,16 @@
 
 - AIs used in making this app
   - Claude 3.5 & 3.6 (anthropic) ⭐⭐⭐⭐⭐
+  - Grok 3 Beta    ⭐⭐⭐⭐⭐
   - Gemini (google)              ⭐⭐⭐
 
 ---
+
+### Running the App
+
+```shell
+oapi-codegen -package=api -generate "types,spec,fiber" oapi_codegen.yml > api/api.gen.go
+```
 
 <details>
 
@@ -95,6 +109,10 @@ chat-app/
 │   ├── models/
 │   │   ├── message.go        # Message data structures
 │   │   └── user.go          # User data structures
+│   ├── controllers/
+│   │   ├── auth_controller.go          # Authentication controllers
+│   │   ├── message_controller.go       # Message controllers
+│   │   └── websocket_controller.go     # WebSocket connection controller
 │   ├── handlers/
 │   │   ├── auth.go          # Authentication handlers
 │   │   ├── message.go       # Message handling
@@ -129,6 +147,7 @@ Each directory and its purpose:
 
 2. `internal/`: Contains private application code
    - `models/`: Data structures that represent your domain
+   - `controllers/`: route controllers
    - `handlers/`: HTTP/WebSocket request handlers
    - `repository/`: Database interaction layer
    - `service/`: Business logic layer
