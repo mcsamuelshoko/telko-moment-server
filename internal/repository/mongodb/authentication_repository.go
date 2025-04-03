@@ -2,13 +2,12 @@ package mongodb
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 	"github.com/mcsamuelshoko/telko-moment-server/pkg/utils"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -153,48 +152,7 @@ func (a AuthenticationRepository) DeleteByUserID(ctx context.Context, userID str
 	return nil
 }
 
-func (a AuthenticationRepository) GenerateUniqueRefreshToken(ctx context.Context, userID string) (string, error) {
-	const maxAttempts = 5
-
-	for attempt := 0; attempt < maxAttempts; attempt++ {
-		// Generate a secure random token
-		tokenBytes := make([]byte, 32)
-		if _, err := rand.Read(tokenBytes); err != nil {
-			a.Logger.Error().Err(err).Msg("Failed to generate refresh token")
-			return "", err
-		}
-		refreshToken := hex.EncodeToString(tokenBytes)
-		// Encrypt token for saving to db
-		encryptedRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
-		if err != nil {
-			a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token in AuthenticationRepository.GenerateUniqueRefreshToken")
-			return "", err
-		}
-
-		// Try to insert the new token
-		_, err = a.Collection.InsertOne(ctx, bson.M{
-			"userId":       userID,
-			"refreshToken": encryptedRefreshToken,
-			"expiresAt":    time.Now().Add(7 * 24 * time.Hour), // Example: 7 days expiration
-			"isActive":     true,
-			"createdAt":    time.Now(),
-		})
-
-		if err != nil {
-			if mongo.IsDuplicateKeyError(err) {
-				// Token already exists, try again
-				continue
-			}
-			a.Logger.Error().Err(err).Str("userID", userID).Msg("Failed to store refresh token")
-			return "", err
-		}
-
-		return refreshToken, nil
-	}
-
-	return "", fmt.Errorf("failed to generate unique refresh token after %d attempts", maxAttempts)
-}
-
+// SaveRefreshToken updates refresh token and adds a fresh one if it does not exist for the user
 func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID string, refreshToken string) error {
 	ID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
@@ -209,7 +167,11 @@ func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID s
 		return err
 	}
 
-	_, err = a.Collection.InsertOne(ctx, bson.M{"userId": ID, "token": refreshToken, "created_at": time.Now()})
+	opts := options.Update().SetUpsert(true)
+	filter := bson.M{"userId": ID}
+	update := bson.D{{"$set", bson.M{"token": refreshToken, "updatedAt": time.Now()}}}
+
+	_, err = a.Collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		a.Logger.Error().Err(err).Str("userID", userID).Msg("Failed to save refresh token")
 		return err
