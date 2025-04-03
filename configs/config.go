@@ -8,6 +8,11 @@ import (
 	"path/filepath"
 )
 
+type JwtConfig struct {
+	Secret               string `env:"JWT_SECRET" envDefault:"secret"`
+	RefreshTokenSecret   string `env:"JWT_REFRESH_TOKEN_SECRET" envDefault:"secret"`
+	RefreshTokenDuration string `env:"JWT_REFRESH_TOKEN_DURATION" envDefault:"1h"`
+}
 type Config struct {
 	MongoDB struct {
 		URI      string `env:"MONGODB_URI" envDefault:"mongodb://localhost:27017"`
@@ -16,6 +21,10 @@ type Config struct {
 	Server struct {
 		Port string `env:"SERVER_PORT" envDefault:":8080"`
 	} `json:"server"`
+	Jwt        JwtConfig `json:"jwt"`
+	Encryption struct {
+		AESKey string `env:"ENC_AES_KEY" envDefault:"0123456789abcdef"`
+	} `json:"encryption"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -41,6 +50,11 @@ func LoadConfig() (*Config, error) {
 		log.Error().Err(err).Msg("Error loading configuration")
 		return nil, err
 	}
+	// Load the ones left by -> envconfig.Process()
+	config.Jwt.RefreshTokenSecret = os.Getenv("JWT_REFRESH_TOKEN_SECRET")
+	config.Jwt.RefreshTokenDuration = os.Getenv("JWT_REFRESH_TOKEN_DURATION")
+
+	config.Encryption.AESKey = os.Getenv("ENC_AES_KEY")
 
 	// Return the loaded configuration
 	return &config, nil
