@@ -1,8 +1,11 @@
 package services
 
 import (
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mcsamuelshoko/telko-moment-server/configs"
 	"github.com/rs/zerolog"
 	"time"
 )
@@ -18,17 +21,35 @@ type IJWTService interface {
 type JWTService struct {
 	jwtSecret             []byte // In production, fetch this from a secure KMS
 	jwtRefreshTokenSecret []byte
-	jwtTokenDuration      string
+	jwtTokenDuration      time.Duration
 	log                   *zerolog.Logger
 }
 
-func NewJWTService(logger *zerolog.Logger, secret, refreshSecret []byte, duration string) IJWTService {
+func NewJWTService(logger *zerolog.Logger, cfg configs.JwtConfig) (*JWTService, error) {
+	secret, err := hex.DecodeString(cfg.Secret)
+	if err != nil || len(secret) < 32 {
+		logger.Error().Err(err).Msg("Invalid JWT Secret")
+		return nil, errors.New("invalid JWT secret key: must be a hex-encoded string of at least 32 bytes")
+	}
+
+	refreshSecret, err := hex.DecodeString(cfg.RefreshTokenSecret)
+	if err != nil || len(refreshSecret) < 32 {
+		logger.Error().Err(err).Msg("Invalid JWT Refresh Secret")
+		return nil, errors.New("invalid refresh JWT secret key: must be a hex-encoded string of at least 32 bytes")
+	}
+
+	duration, err := time.ParseDuration(cfg.RefreshTokenDuration)
+	if err != nil {
+		logger.Error().Err(err).Msg("Invalid JWT Refresh Duration")
+		return nil, errors.New("invalid JWT duration string")
+	}
+
 	return &JWTService{
-		log:                   logger,
 		jwtSecret:             secret,
 		jwtRefreshTokenSecret: refreshSecret,
 		jwtTokenDuration:      duration,
-	}
+		log:                   logger,
+	}, nil
 }
 
 func (j *JWTService) GenerateAccessToken(userID string) (string, error) {
