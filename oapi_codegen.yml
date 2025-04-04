@@ -1,23 +1,36 @@
 openapi: 3.0.0
 
 info:
-  title: Telko moment API
-  description: Tellme messenger's backend API for managing functionality
-  version: 0.1.0
+  title: Telko Moment API
+  description: Backend API server for Tellme messenger
+  version: 0.01-alpha
   x-go-package: "github.com/oapi-codegen/runtime"
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: API Support
+#    email: support@example.com
+    url: http://x.com/mcsamuelshoko
   x-oapi-codegen-middlewares:
     - Middleware
+
+
 
 servers:
   - url: http://localhost:8080/v1
     description: local, development server
 
+security:
+  - bearerAuth: [] # use the same name as above
+
+
+
 tags:
   - name: Index
     description: the entry route of the server
+  - name: Authentication
+    description: request authentication routes
   - name: User
     description: Everything to do about users
   - name: Settings
@@ -30,11 +43,25 @@ tags:
     description: access messages sent by users
   - name: Media
     description: access media sent by users
-  - name: Highlight
+  - name: Highlights
     description: User 24hr highlights
 
 
+
 paths:
+  /:
+    get:
+      tags:
+        - Index
+      summary: Index entry for api status
+      operationId: index
+      responses:
+        '200':
+          description: server is online
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCreateRequest'
   /users:
     post:
       tags:
@@ -338,7 +365,7 @@ paths:
   /messages:
     post:
       tags:
-        - Chats
+        - Messages
       summary: Send a new message
       operationId: sendMessage
       requestBody:
@@ -368,7 +395,7 @@ paths:
                 $ref: '#/components/schemas/GlobalResponses'
     get:
       tags:
-        - Chats
+        - Messages
       summary: Get messages for a chat
       operationId: getMessagesByChatId
       parameters:
@@ -589,7 +616,7 @@ paths:
   /chatgroups:
     post:
       tags:
-        - ChatGroup
+        - ChatGroups
       summary: Create a new chat group
       operationId: createChatGroup
       requestBody:
@@ -619,7 +646,7 @@ paths:
                 $ref: '#/components/schemas/GlobalResponses'
     get:
       tags:
-        - ChatGroup
+        - ChatGroups
       summary: Get all chat groups
       operationId: getAllChatGroups
       responses:
@@ -640,7 +667,7 @@ paths:
   /chatgroups/{chatGroupId}:
     get:
       tags:
-        - ChatGroup
+        - ChatGroups
       summary: Get a chat group by ID
       operationId: getChatGroupById
       parameters:
@@ -670,7 +697,7 @@ paths:
                 $ref: '#/components/schemas/GlobalResponses'
     put:
       tags:
-        - ChatGroup
+        - ChatGroups
       summary: Update a chat group
       operationId: updateChatGroup
       parameters:
@@ -712,7 +739,7 @@ paths:
                 $ref: '#/components/schemas/GlobalResponses'
     delete:
       tags:
-        - ChatGroup
+        - ChatGroups
       summary: Delete a chat group
       operationId: deleteChatGroup
       parameters:
@@ -962,7 +989,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
+
+
 components:
+  #-------------------------------
+  # Reusable schemas (data models)
+  #-------------------------------
   schemas:
     GlobalResponses:
       type: object
@@ -978,6 +1011,13 @@ components:
           type: string
           description: A human-readable message describing the response.
           example: "Success"
+    Error: # Can be referenced as '#/components/schemas/Error'
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
     User:
       type: object
       properties:
@@ -1608,3 +1648,75 @@ components:
           format: date-time
           description: The date and time the highlight was created.
           example: "2024-01-20T12:00:00Z"
+
+
+  #-------------------------------
+  # Reusable Security Schemas
+  #-------------------------------
+  securitySchemes:
+    APIGatewayAuthorizer:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: oauth2
+      x-amazon-apigateway-authorizer:
+        type: token
+        authorizerUri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:account-id:function:function-name/invocations
+        authorizerCredentials: arn:aws:iam::account-id:role
+        identityValidationExpression: "^x-[a-z]+"
+        authorizerResultTtlInSeconds: 60
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT # optional, arbitrary value for documentation purposes
+
+
+  #-------------------------------
+  # Reusable operation parameters
+  #-------------------------------
+  parameters:
+    offsetParam:
+      name: offset
+      in: query
+      description: Number of items to skip before returning the results.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+
+    limitParam:
+      name: limit
+      in: query
+      description: Maximum number of items to return.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+
+
+  #-------------------------------
+  # Reusable responses
+  #-------------------------------
+  responses:
+    404NotFound: # Can be referenced as '#/components/responses/404NotFound'
+      description: The specified resource was not found.
+
+    ImageResponse: # Can be referenced as '#/components/responses/ImageResponse'
+      description: An image.
+      content:
+        image/*:
+          schema:
+            type: string
+            format: binary
+
+    GenericError: # Can be referenced as '#/components/responses/GenericError'
+      description: An error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
