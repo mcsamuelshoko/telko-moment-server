@@ -10,7 +10,6 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   contact:
     name: API Support
-#    email: support@example.com
     url: http://x.com/mcsamuelshoko
   x-oapi-codegen-middlewares:
     - Middleware
@@ -21,16 +20,15 @@ servers:
   - url: http://localhost:8080/v1
     description: local, development server
 
-security:
-  - bearerAuth: [] # use the same name as above
-
+security: # extracted from #components/securitySchemes
+  - BearerAuth: [] # apply to all endpoints
 
 
 tags:
   - name: Index
     description: the entry route of the server
-  - name: Authentication
-    description: request authentication routes
+  - name: Auth
+    description: registration & authentication routes
   - name: User
     description: Everything to do about users
   - name: Settings
@@ -51,6 +49,7 @@ tags:
 paths:
   /:
     get:
+      security: []
       tags:
         - Index
       summary: Index entry for api status
@@ -62,6 +61,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChatCreateRequest'
+
+  /auth/login:
+    post:
+      summary: Logs in and returns JWT-auth-token
+      tags:
+        - Auth
+      operationId: authLogin
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/LoginRequest"
+      responses:
+        '200':
+          $ref: "#/components/responses/404NotFound"
+
+  /auth/register:
+    post:
+      summary: Registers and returns JWT-auth-token
+      operationId: authRegister
+      security: []
+      tags:
+        - Auth
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterRequest"
+      responses:
+        '201':
+          $ref: "#/components/responses/404NotFound"
+
+
   /users:
     post:
       tags:
@@ -212,6 +239,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
   /chats:
     post:
       tags:
@@ -362,6 +390,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
   /messages:
     post:
       tags:
@@ -525,6 +554,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
   /media:
     post:
       tags:
@@ -613,6 +643,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
   /chatgroups:
     post:
       tags:
@@ -763,6 +794,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
   /settings/{userId}:
     get:
       tags:
@@ -836,6 +868,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
+
   /highlights:
     post:
       tags:
@@ -888,7 +921,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalResponses'
-
   /highlights/{highlightId}:
     get:
       tags:
@@ -1011,6 +1043,7 @@ components:
           type: string
           description: A human-readable message describing the response.
           example: "Success"
+
     Error: # Can be referenced as '#/components/schemas/Error'
       type: object
       properties:
@@ -1018,6 +1051,57 @@ components:
           type: integer
         message:
           type: string
+
+    AuthLoginRequestEmail:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+          example: "john.doe@example.com"
+        password:
+          type: string
+          description: The password of the user.
+          example: "secret_password"
+
+    AuthLoginRequestPhoneNumber:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          description: The phone number of the user.
+          example: "+15551234567"
+        password:
+          type: string
+          description: The password of the user.
+          example: "secret_password"
+
+    AuthRegisterRequestEmail:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+          example: "john.doe@example.com"
+        password:
+          type: string
+          description: The password of the user.
+          example: "secret_password"
+
+    AuthRegisterRequestPhoneNumber:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          description: The phone number of the user.
+          example: "+15551234567"
+        password:
+          type: string
+          description: The password of the user.
+          example: "secret_password"
+
     User:
       type: object
       properties:
@@ -1090,6 +1174,7 @@ components:
           format: date-time
           description: The date and time the user was last updated.
           example: "2024-01-20T13:00:00Z"
+
     UserCreateRequest:
       type: object
       required:
@@ -1154,6 +1239,7 @@ components:
           type: string
           description: The user's country.
           example: "USA"
+
     UserUpdateRequest:
       type: object
       properties:
@@ -1211,6 +1297,7 @@ components:
           type: string
           description: The user's country.
           example: "USA"
+
     Chat:
       type: object
       properties:
@@ -1247,6 +1334,7 @@ components:
           type: string
           description: The ID of the last message sent in the chat.
           example: "60a5a5a5a5a5a5a5a5a5a5a7"
+
     ChatCreateRequest:
       type: object
       required:
@@ -1268,6 +1356,7 @@ components:
           type: string
           description: The name of the chat (for group chats).
           example: "Team Project"
+
     ChatUpdateRequest:
       type: object
       properties:
@@ -1290,6 +1379,7 @@ components:
           type: string
           description: The ID of the last message sent in the chat.
           example: "60b6b6b6b6b6b6b6b6b6b6b6"
+
     Message:
       type: object
       properties:
@@ -1350,6 +1440,7 @@ components:
           type: string
           description: The ID of the message this message is a reply to.
           example: "60a5a5a5a5a5a5a5a5a5a5a9"
+
     MessageCreateRequest:
       type: object
       required:
@@ -1392,6 +1483,7 @@ components:
           type: string
           description: The ID of the message this message is a reply to.
           example: "60a5a5a5a5a5a5a5a5a5a5a9"
+
     MessageUpdateRequest:
       type: object
       properties:
@@ -1422,6 +1514,7 @@ components:
           type: string
           description: The ID of the message this message is a reply to.
           example: "60d7d7d7d7d7d7d7d7d7d7d7"
+
     Media:
       type: object
       properties:
@@ -1459,6 +1552,7 @@ components:
           format: date-time
           description: The date and time the media was uploaded.
           example: "2024-01-20T12:00:00Z"
+
     MediaUploadRequest:
       type: object
       required:
@@ -1483,6 +1577,7 @@ components:
           type: string
           format: binary
           description: The media file to upload.
+
     ChatGroup:
       type: object
       properties:
@@ -1531,6 +1626,7 @@ components:
           type: string
           description: The ID of the associated chat.
           example: "60b6b6b6b6b6b6b6b6b6b6b6"
+
     ChatGroupCreateRequest:
       type: object
       required:
@@ -1565,6 +1661,7 @@ components:
           format: uri
           description: URL to the chat group's profile picture.
           example: "https://example.com/group.jpg"
+
     ChatGroupUpdateRequest:
       type: object
       properties:
@@ -1599,6 +1696,7 @@ components:
           type: string
           description: The ID of the associated chat.
           example: "60d8d8d8d8d8d8d8d8d8d8d8"
+
     Settings:
       type: object
       properties:
@@ -1624,6 +1722,7 @@ components:
           format: date-time
           description: The date and time the settings were last updated.
           example: "2024-01-20T13:00:00Z"
+
     Highlight:
       type: object
       properties:
@@ -1653,7 +1752,7 @@ components:
   #-------------------------------
   # Reusable Security Schemas
   #-------------------------------
-  securitySchemes:
+  securitySchemes:  # https://swagger.io/docs/specification/v3_0/authentication/
     APIGatewayAuthorizer:
       type: apiKey
       name: Authorization
@@ -1665,10 +1764,16 @@ components:
         authorizerCredentials: arn:aws:iam::account-id:role
         identityValidationExpression: "^x-[a-z]+"
         authorizerResultTtlInSeconds: 60
-    bearerAuth: # arbitrary name for the security scheme
+
+    BearerAuth: # arbitrary name for the security scheme
       type: http
       scheme: bearer
       bearerFormat: JWT # optional, arbitrary value for documentation purposes
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
 
 
   #-------------------------------
@@ -1699,14 +1804,58 @@ components:
         default: 20
 
 
+
+  #-------------------------------
+  # Reusable Headers
+  #-------------------------------
+  headers:
+
+
+  #-------------------------------
+  # Reusable requestBodies
+  #-------------------------------
+  requestBodies:
+    LoginRequest:
+      description: A JSON object containing the login credentials & password
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/AuthLoginRequestEmail"
+              - $ref: "#/components/schemas/AuthLoginRequestPhoneNumber"
+
+    RegisterRequest:
+      description: A JSON object containing the registration credentials & password
+      required: true
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/AuthRegisterRequestEmail"
+              - $ref: "#/components/schemas/AuthRegisterRequestPhoneNumber"
+
+
+
   #-------------------------------
   # Reusable responses
   #-------------------------------
   responses:
-    404NotFound: # Can be referenced as '#/components/responses/404NotFound'
-      description: The specified resource was not found.
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
 
-    ImageResponse: # Can be referenced as '#/components/responses/ImageResponse'
+    404NotFound:
+      description: The specified resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    ImageResponse:
       description: An image.
       content:
         image/*:
@@ -1714,7 +1863,7 @@ components:
             type: string
             format: binary
 
-    GenericError: # Can be referenced as '#/components/responses/GenericError'
+    GenericError:
       description: An error occurred.
       content:
         application/json:
