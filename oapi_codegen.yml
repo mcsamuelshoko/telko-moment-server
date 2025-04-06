@@ -21,7 +21,7 @@ servers:
     description: local, development server
 
 security: # extracted from #components/securitySchemes
-  - BearerAuth: [] # apply to all endpoints
+  - BearerAuth: [ ] # apply to all endpoints
 
 
 tags:
@@ -49,7 +49,7 @@ tags:
 paths:
   /:
     get:
-      security: []
+      security: [ ]
       tags:
         - Index
       summary: Index entry for api status
@@ -68,7 +68,7 @@ paths:
       tags:
         - Auth
       operationId: authLogin
-      security: []
+      security: [ ]
       requestBody:
         $ref: "#/components/requestBodies/LoginRequest"
       responses:
@@ -79,7 +79,7 @@ paths:
     post:
       summary: Registers and returns JWT-auth-token
       operationId: authRegister
-      security: []
+      security: [ ]
       tags:
         - Auth
       requestBody:
@@ -154,11 +154,7 @@ paths:
             type: string
       responses:
         '200':
-          description: User details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+          $ref: '#/components/responses/UserSuccessResponse'
         '404':
           description: User not found
           content:
@@ -1044,13 +1040,20 @@ components:
           description: A human-readable message describing the response.
           example: "Success"
 
-    Error: # Can be referenced as '#/components/schemas/Error'
+    ErrorResponseSimple:
+      required:
+      - success
+      - message
       type: object
       properties:
-        code:
-          type: integer
+        success:
+          type: boolean
+          description: success status of the response
+          example: false
         message:
           type: string
+          description: description of process outcome
+          example: execution failed
 
     AuthLoginRequestEmail:
       type: object
@@ -1297,6 +1300,20 @@ components:
           type: string
           description: The user's country.
           example: "USA"
+
+    UserSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: is the response a success response
+          example: true
+        message:
+          type: string
+          description: description of process outcome
+          example: execution was successful
+        data:
+          $ref: "#/components/schemas/User"
 
     Chat:
       type: object
@@ -1752,7 +1769,7 @@ components:
   #-------------------------------
   # Reusable Security Schemas
   #-------------------------------
-  securitySchemes:  # https://swagger.io/docs/specification/v3_0/authentication/
+  securitySchemes: # https://swagger.io/docs/specification/v3_0/authentication/
     APIGatewayAuthorizer:
       type: apiKey
       name: Authorization
@@ -1809,6 +1826,21 @@ components:
   # Reusable Headers
   #-------------------------------
   headers:
+    X-RateLimit-Limit:
+      schema:
+        type: integer
+      description: Request limit per hour.
+
+    X-RateLimit-Remaining:
+      schema:
+        type: integer
+      description: The number of requests left for the time window.
+
+    X-RateLimit-Reset:
+      schema:
+        type: string
+        format: date-time
+      description: The UTC date/time at which the current rate limit window resets.
 
 
   #-------------------------------
@@ -1853,7 +1885,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponseSimple"
 
     ImageResponse:
       description: An image.
@@ -1868,4 +1900,12 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponseSimple"
+
+    UserSuccessResponse:
+      description: User data and response data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserSuccessResponse"
+
