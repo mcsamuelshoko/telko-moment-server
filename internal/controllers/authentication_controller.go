@@ -207,6 +207,17 @@ func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegiste
 
 	var err error
 
+	//check if email is valid
+	if !(utils.IsValidEmail(emailRegisterRequest.Email)) {
+		a.log.Error().Msg("Email format is invalid")
+		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid email"))
+	}
+	//check if password is strong
+	if !(utils.IsStrongPassword(emailRegisterRequest.Password)) {
+		a.log.Error().Msg("Password is weak")
+		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Weak password, please make it min-chars=8 & at least 1 Number, at least 1 special character, at least 1 small letter,and at least 1 CAPITAL letter "))
+	}
+
 	//register user using Email
 	if err2 == nil {
 		user.Email = emailRegisterRequest.Email
@@ -241,6 +252,18 @@ func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegiste
 
 func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, registerRequest models.RegisterRequest, err1 error, user *models.User, failedRegErrMsg string) error {
 	var err error
+
+	//check if PhoneNumber is valid
+	if !(utils.IsValidPhoneNumber(registerRequest.PhoneNumber)) {
+		a.log.Error().Msg("Phone number format is invalid")
+		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid phone number"))
+	}
+	//check if password is strong
+	if !(utils.IsStrongPassword(registerRequest.Password)) {
+		a.log.Error().Msg("Password is weak")
+		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Weak password, please make it min-chars=8 & at least 1 Number, at least 1 special character, at least 1 small letter,and at least 1 CAPITAL letter "))
+	}
+
 	if err1 == nil {
 		user.PhoneNumber = registerRequest.PhoneNumber
 		user.Password, err = utils.HashPassword(registerRequest.Password)
