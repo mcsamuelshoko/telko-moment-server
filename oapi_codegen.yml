@@ -17,7 +17,7 @@ info:
 
 
 servers:
-  - url: http://localhost:8080/v1
+  - url: http://localhost:8080/api/v1/
     description: local, development server
 
 security: # extracted from #components/securitySchemes
@@ -73,7 +73,13 @@ paths:
         $ref: "#/components/requestBodies/LoginRequest"
       responses:
         '200':
-          $ref: "#/components/responses/404NotFound"
+          $ref: "#/components/responses/AuthLoginSuccess"
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '401':
+          $ref: "#/components/responses/401Unauthorized"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
 
   /auth/register:
     post:
@@ -86,8 +92,11 @@ paths:
         $ref: "#/components/requestBodies/RegisterRequest"
       responses:
         '201':
-          $ref: "#/components/responses/404NotFound"
-
+          $ref: "#/components/responses/UserRegistrationSuccess"
+        '400':
+          $ref: "#/components/responses/400BadRequest"
+        '500':
+          $ref: "#/components/responses/500InternalServerError"
 
   /users:
     post:
@@ -154,7 +163,7 @@ paths:
             type: string
       responses:
         '200':
-          $ref: '#/components/responses/UserSuccessResponse'
+          $ref: '#/components/responses/UserSuccess'
         '404':
           description: User not found
           content:
@@ -1040,7 +1049,7 @@ components:
           description: A human-readable message describing the response.
           example: "Success"
 
-    ErrorResponseSimple:
+    ErrorGenericResponse:
       required:
       - success
       - message
@@ -1055,7 +1064,7 @@ components:
           description: description of process outcome
           example: execution failed
 
-    AuthLoginRequestEmail:
+    AuthLoginEmailRequest:
       type: object
       properties:
         email:
@@ -1068,7 +1077,7 @@ components:
           description: The password of the user.
           example: "secret_password"
 
-    AuthLoginRequestPhoneNumber:
+    AuthLoginPhoneNumberRequest:
       type: object
       properties:
         phoneNumber:
@@ -1080,7 +1089,7 @@ components:
           description: The password of the user.
           example: "secret_password"
 
-    AuthRegisterRequestEmail:
+    AuthRegisterEmailRequest:
       type: object
       properties:
         email:
@@ -1093,7 +1102,7 @@ components:
           description: The password of the user.
           example: "secret_password"
 
-    AuthRegisterRequestPhoneNumber:
+    AuthRegisterPhoneNumberRequest:
       type: object
       properties:
         phoneNumber:
@@ -1104,6 +1113,31 @@ components:
           type: string
           description: The password of the user.
           example: "secret_password"
+
+    AuthLogin:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token used in authentication
+        refreshToken:
+          type: string
+          description: JWT-Refresh-Token used for expiration and renewal/extending of expiration time
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: is the response a success response
+          example: true
+        message:
+          type: string
+          description: description of process outcome
+          example: execution was successful
+        data:
+          $ref: "#/components/schemas/AuthLogin"
+
 
     User:
       type: object
@@ -1306,11 +1340,25 @@ components:
       properties:
         success:
           type: boolean
-          description: is the response a success response
+          description: Is the response a success response
           example: true
         message:
           type: string
           description: description of process outcome
+          example: execution was successful
+        data:
+          $ref: "#/components/schemas/User"
+
+    UserCreatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Successful response
+          example: true
+        message:
+          type: string
+          description: Registered user details (may contain arbitrary defaults)
           example: execution was successful
         data:
           $ref: "#/components/schemas/User"
@@ -1854,8 +1902,8 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/AuthLoginRequestEmail"
-              - $ref: "#/components/schemas/AuthLoginRequestPhoneNumber"
+              - $ref: "#/components/schemas/AuthLoginEmailRequest"
+              - $ref: "#/components/schemas/AuthLoginPhoneNumberRequest"
 
     RegisterRequest:
       description: A JSON object containing the registration credentials & password
@@ -1864,8 +1912,8 @@ components:
         application/json:
           schema:
             oneOf:
-              - $ref: "#/components/schemas/AuthRegisterRequestEmail"
-              - $ref: "#/components/schemas/AuthRegisterRequestPhoneNumber"
+              - $ref: "#/components/schemas/AuthRegisterEmailRequest"
+              - $ref: "#/components/schemas/AuthRegisterPhoneNumberRequest"
 
 
 
@@ -1879,13 +1927,30 @@ components:
         WWW_Authenticate:
           schema:
             type: string
-
+    400BadRequest:
+      description: Bad request, please check request data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorGenericResponse"
+    401Unauthorized:
+      description: Unauthorized request, please authenticate/login
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorGenericResponse"
     404NotFound:
       description: The specified resource was not found.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponseSimple"
+            $ref: "#/components/schemas/ErrorGenericResponse"
+    500InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorGenericResponse"
 
     ImageResponse:
       description: An image.
@@ -1900,12 +1965,27 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponseSimple"
+            $ref: "#/components/schemas/ErrorGenericResponse"
 
-    UserSuccessResponse:
+
+    AuthLoginSuccess:
+      description: Authentication/Login tokens to use in following requests in header
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthLoginResponse"
+
+    UserSuccess:
       description: User data and response data
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/UserSuccessResponse"
+
+    UserRegistrationSuccess:
+      description: Registered user information (may contain arbitrary defaults)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserCreatedResponse"
 
