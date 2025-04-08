@@ -2,8 +2,10 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
+	"github.com/mcsamuelshoko/telko-moment-server/pkg/services"
 	"github.com/rs/zerolog"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,39 +14,61 @@ import (
 )
 
 type userRepository struct {
-	Collection *mongo.Collection
-	Log        *zerolog.Logger
+	iName             string
+	Collection        *mongo.Collection
+	Log               *zerolog.Logger
+	EncryptionService services.IEncryptionService
 }
 
-func NewUserRepository(log *zerolog.Logger, db *mongo.Database) repository.UserRepository {
+func NewUserRepository(log *zerolog.Logger, db *mongo.Database, encryptSvc services.IEncryptionService) repository.IUserRepository {
 	return &userRepository{
-		Collection: db.Collection("users"),
-		Log:        log,
+		iName:             "UserRepository",
+		Collection:        db.Collection("users"),
+		Log:               log,
+		EncryptionService: encryptSvc,
 	}
 }
 
-func (u userRepository) Create(ctx context.Context, user *models.User) error {
-	_, err := u.Collection.InsertOne(ctx, user)
+func (u userRepository) Create(ctx context.Context, user *models.User) (*models.User, error) {
+	//Encrypt fields before saving
+	err := user.EncryptFields(u.EncryptionService)
 	if err != nil {
-		u.Log.Error().Err(err).Msg("Failed to create user")
-		return err
+		u.Log.Error().Interface("Create", u.iName).Err(err).Msg("error encrypting user")
+		return nil, err
 	}
-	return nil
+
+	res, err := u.Collection.InsertOne(ctx, user)
+	if err != nil {
+		u.Log.Error().Interface("Create", u.iName).Err(err).Msg("Failed to create user")
+		return nil, err
+	}
+	user.ID = res.InsertedID.(primitive.ObjectID)
+	err = user.DecryptFields(u.EncryptionService)
+	if err != nil {
+		u.Log.Error().Interface("Create", u.iName).Err(err).Msg("Failed to decrypt new user")
+		return nil, err
+	}
+	return user, nil
 }
 
 func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
 	// user ID to search for
 	userID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		u.Log.Error().Err(err).Msg("Failed to convert id to object id")
-		u.Log.Debug().Err(err).Msg("Failed to convert id:" + id)
+		u.Log.Error().Interface("GetByID", u.iName).Err(err).Msg("Failed to convert id to object id")
+		u.Log.Debug().Interface("GetByID", u.iName).Err(err).Msg("Failed to convert id:" + id)
 		return nil, err
 	}
 
 	user := &models.User{}
 	err = u.Collection.FindOne(ctx, bson.M{"_id": userID}).Decode(user)
 	if err != nil {
-		u.Log.Error().Err(err).Msg("Failed to find user with id: " + id)
+		u.Log.Error().Interface("GetByID", u.iName).Err(err).Msg("Failed to find user with id: " + id)
+		return nil, err
+	}
+	err = user.DecryptFields(u.EncryptionService)
+	if err != nil {
+		u.Log.Error().Err(err).Interface("GetByID", u.iName).Msg("Failed to decrypt user with id: " + id)
 		return nil, err
 	}
 	return user, nil
@@ -53,9 +77,20 @@ func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, e
 
 func (u userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	user := &models.User{}
-	err := u.Collection.FindOne(ctx, bson.M{"email": email}).Decode(user)
+	// encrypt before search
+	encEmail, err := u.EncryptionService.Encrypt(email)
 	if err != nil {
-		u.Log.Error().Err(err).Msg("Failed to find user with email: " + email)
+		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to encrypt user with Email: " + email)
+		return nil, err
+	}
+	err = u.Collection.FindOne(ctx, bson.M{"email": encEmail}).Decode(user)
+	if err != nil {
+		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to find user with email: " + email)
+		return nil, err
+	}
+	err = user.DecryptFields(u.EncryptionService)
+	if err != nil {
+		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to decrypt user with email: " + email)
 		return nil, err
 	}
 	return user, nil
@@ -63,9 +98,41 @@ func (u userRepository) GetByEmail(ctx context.Context, email string) (*models.U
 
 func (u userRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
 	user := &models.User{}
-	err := u.Collection.FindOne(ctx, bson.M{"username": username}).Decode(user)
+	// encrypt before search
+	encUsername, err := u.EncryptionService.Encrypt(username)
 	if err != nil {
-		u.Log.Error().Err(err).Msg("Failed to find user with username: " + username)
+		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to encrypt user with username: " + username)
+		return nil, err
+	}
+	err = u.Collection.FindOne(ctx, bson.M{"username": encUsername}).Decode(user)
+	if err != nil {
+		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to find user with username: " + username)
+		return nil, err
+	}
+	err = user.DecryptFields(u.EncryptionService)
+	if err != nil {
+		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to decrypt user with username: " + username)
+		return nil, err
+	}
+	return user, nil
+}
+
+func (u userRepository) GetByPhoneNumber(ctx context.Context, phoneNumber string) (*models.User, error) {
+	user := &models.User{}
+	// encrypt before search
+	encPhoneNumber, err := u.EncryptionService.Encrypt(phoneNumber)
+	if err != nil {
+		u.Log.Error().Interface("GetByPhoneNumber", u.iName).Err(err).Msg("Failed to encrypt user with phoneNumber: " + phoneNumber)
+		return nil, err
+	}
+	err = u.Collection.FindOne(ctx, bson.M{"phoneNumber": encPhoneNumber}).Decode(user)
+	if err != nil {
+		u.Log.Error().Interface("GetByPhoneNumber", u.iName).Err(err).Msg("Failed to find user with phone number: " + phoneNumber)
+		return nil, err
+	}
+	err = user.DecryptFields(u.EncryptionService)
+	if err != nil {
+		u.Log.Error().Interface("GetByPhoneNumber", u.iName).Err(err).Msg("Failed to decrypt user with phone number: " + phoneNumber)
 		return nil, err
 	}
 	return user, nil
@@ -97,25 +164,59 @@ func (u userRepository) List(ctx context.Context, page, limit int) ([]models.Use
 		return nil, err
 	}
 
+	// decrypt user fields
+	for i := 0; i < len(users); i++ {
+		err = users[i].DecryptFields(u.EncryptionService)
+		if err != nil {
+			u.Log.Error().Err(err).Msg("Failed to decrypt user with username: " + users[i].Username)
+		}
+
+	}
+
 	return users, nil
 }
 
-func (u userRepository) Update(ctx context.Context, user *models.User) error {
-	// Use the _id field from the user model for the filter
-	// Create an update document with $set to update the user fields
-	// Specify the options
-	filter := bson.D{{"_id", user.Id}}
-	update := bson.D{{"$set", user}}
-	opts := options.Update().SetUpsert(true)
+func (u userRepository) Update(ctx context.Context, user *models.User) (*models.User, error) {
+	//// Use the _id field from the user model for the filter
+	//// Create an update document with $set to update the user fields
+	//// Specify the options
+	//filter := bson.D{{"_id", user.ID}}
+	//update := bson.D{{"$set", user}}
+	//opts := options.Update().SetUpsert(true)
+	//
+	//// Execute the update operation
+	//res, err := u.Collection.UpdateOne(ctx, filter, update, opts)
+	//if err != nil {
+	//	u.Log.Error().Err(err).Msg("Failed to update user with id: " + user.ID.String())
+	//	return nil, err
+	//}
+	//
+	//return nil
 
-	// Execute the update operation
-	_, err := u.Collection.UpdateOne(ctx, filter, update, opts)
+	// Create a filter using the _id field
+	filter := bson.D{{"_id", user.ID}}
+
+	// Create an update document, excluding the _id field
+	update := bson.D{{"$set", user}}
+
+	// Options to return the updated document
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After).SetUpsert(true)
+
+	// Create a variable to store the updated user
+	var updatedUser models.User
+
+	// Execute the update and retrieve the updated document
+	err := u.Collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&updatedUser)
 	if err != nil {
-		u.Log.Error().Err(err).Msg("Failed to update user with id: " + user.Id.String())
-		return err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			u.Log.Warn().Msg("No document found to update with id: " + user.ID.String())
+			return nil, err
+		}
+		u.Log.Error().Err(err).Msg("Failed to update user with id: " + user.ID.String())
+		return nil, err
 	}
 
-	return nil
+	return &updatedUser, nil
 }
 
 func (u userRepository) Delete(ctx context.Context, id string) error {
