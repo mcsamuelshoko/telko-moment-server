@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
@@ -185,37 +186,47 @@ func (a *AuthenticationController) Register(c *fiber.Ctx) error {
 	// user defaults
 	user := models.GetUserDefaultsFromHeaders(utils.GetHeaderMap(c))
 	var err error
+	var regUserResponse fiber.Map
+	var responseStatus int
 
 	//register user using email
-	err = a.registerUsingEmail(c, *emailRegisterRequest, err2, user, failedRegErrMsg)
+	regUserResponse, err, responseStatus = a.registerUsingEmail(c, *emailRegisterRequest, err2, user, failedRegErrMsg)
 	if err != nil {
 		a.log.Error().Err(err).Msg("Failed to register email-registration user")
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(failedRegErrMsg))
+		return c.Status(responseStatus).JSON(utils.ErrorResponse(err.Error()))
+	}
+	if regUserResponse != nil {
+		a.log.Info().Msg("User registered successfully with Email")
+		return c.Status(fiber.StatusCreated).JSON(regUserResponse)
 	}
 	//register user using phoneNumber
-	err = a.registrationUsingPhoneNumber(c, *registerRequest, err1, user, failedRegErrMsg)
+	regUserResponse, err, responseStatus = a.registrationUsingPhoneNumber(c, *registerRequest, err1, user, failedRegErrMsg)
 	if err != nil {
 		a.log.Error().Err(err).Msg("Failed to register phoneNumber-registration user")
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(failedRegErrMsg))
+		return c.Status(responseStatus).JSON(utils.ErrorResponse(err.Error()))
+	}
+	if regUserResponse != nil {
+		a.log.Info().Msg("User registered successfully with Phone Number")
+		return c.Status(fiber.StatusCreated).JSON(regUserResponse)
 	}
 
 	// This code should never be reached given the previous error checks
 	return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Unexpected error"))
 }
 
-func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegisterRequest models.RegisterRequestEmail, err2 error, user *models.User, failedRegErrMsg string) error {
+func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegisterRequest models.RegisterRequestEmail, err2 error, user *models.User, failedRegErrMsg string) (fiber.Map, error, int) {
 
 	var err error
 
 	//check if email is valid
 	if !(utils.IsValidEmail(emailRegisterRequest.Email)) {
 		a.log.Error().Msg("Email format is invalid")
-		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid email"))
+		return nil, errors.New("invalid email"), fiber.StatusBadRequest
 	}
 	//check if password is strong
 	if !(utils.IsStrongPassword(emailRegisterRequest.Password)) {
 		a.log.Error().Msg("Password is weak")
-		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Weak password, please make it min-chars=8 & at least 1 Number, at least 1 special character, at least 1 small letter,and at least 1 CAPITAL letter "))
+		return nil, errors.New("password is weak"), fiber.StatusBadRequest
 	}
 
 	//register user using Email
@@ -224,44 +235,46 @@ func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegiste
 		user.Password, err = utils.HashPassword(emailRegisterRequest.Password)
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to hash password")
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(failedRegErrMsg))
+			return nil, errors.New("server had an error"), fiber.StatusInternalServerError
 		}
 
 		createdUser, err := a.userService.CreateUser(c.Context(), user)
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to create user")
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(failedRegErrMsg))
+			return nil, errors.New(failedRegErrMsg), fiber.StatusInternalServerError
 		}
 
 		err = a.createSettingsForUser(c, createdUser)
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to create user settings")
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("failed to create user settings"))
+			return nil, errors.New(failedRegErrMsg), fiber.StatusInternalServerError
+
 		}
 
 		// Return the created user without sensitive information
-		return c.Status(fiber.StatusCreated).JSON(utils.SuccessResponse(
+		return utils.SuccessResponse(
 			createdUser.Sanitize(),
 			"User registered successfully",
-		))
+		), nil, fiber.StatusCreated
 	}
 
-	return nil
+	a.log.Error().Err(err2).Msg("Unexpected Error, Failed to register user with Email")
+	return nil, errors.New("unexpected email registration error"), fiber.StatusInternalServerError
 
 }
 
-func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, registerRequest models.RegisterRequest, err1 error, user *models.User, failedRegErrMsg string) error {
+func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, registerRequest models.RegisterRequest, err1 error, user *models.User, failedRegErrMsg string) (fiber.Map, error, int) {
 	var err error
 
 	//check if PhoneNumber is valid
 	if !(utils.IsValidPhoneNumber(registerRequest.PhoneNumber)) {
 		a.log.Error().Msg("Phone number format is invalid")
-		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid phone number"))
+		return nil, errors.New("invalid phone number"), fiber.StatusBadRequest
 	}
 	//check if password is strong
 	if !(utils.IsStrongPassword(registerRequest.Password)) {
 		a.log.Error().Msg("Password is weak")
-		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Weak password, please make it min-chars=8 & at least 1 Number, at least 1 special character, at least 1 small letter,and at least 1 CAPITAL letter "))
+		return nil, errors.New("password is weak, please make it min-chars=8 and include a [Number], & [special character], & [small letter], & [uppercase letter]"), fiber.StatusBadRequest
 	}
 
 	if err1 == nil {
@@ -269,27 +282,29 @@ func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, re
 		user.Password, err = utils.HashPassword(registerRequest.Password)
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to hash password")
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(failedRegErrMsg))
+			return nil, errors.New("server had an error"), fiber.StatusInternalServerError
 		}
 
 		createdUser, err := a.userService.CreateUser(c.Context(), user)
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to create user")
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("failed to create user account"))
+			return nil, errors.New(failedRegErrMsg), fiber.StatusInternalServerError
 		}
 		err = a.createSettingsForUser(c, createdUser)
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to create user settings")
-			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("failed to create user settings"))
+			return nil, errors.New(failedRegErrMsg), fiber.StatusInternalServerError
 		}
 
 		// Return the created user without sensitive information
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"message": "User registered successfully",
-			"user":    createdUser.Sanitize(),
-		})
+		return utils.SuccessResponse(
+			createdUser.Sanitize(),
+			"User registered successfully",
+		), nil, fiber.StatusCreated
 	}
-	return nil
+
+	a.log.Error().Err(err1).Msg("Unexpected Error, Failed to register user with Phone Number")
+	return nil, errors.New("unexpected phone number registration error"), fiber.StatusInternalServerError
 }
 
 func (a *AuthenticationController) createSettingsForUser(c *fiber.Ctx, createdUser *models.User) error {
