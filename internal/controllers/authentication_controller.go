@@ -229,10 +229,20 @@ func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegiste
 		return nil, errors.New("password is weak"), fiber.StatusBadRequest
 	}
 
+	//check if user exists
+	_, err = a.userService.GetUserByEmail(c.Context(), emailRegisterRequest.Email)
+	if err != nil {
+		a.log.Info().Msg("User does not exist, & can be registered")
+	} else {
+		a.log.Error().Err(err).Msg("User already exists")
+		return nil, err, fiber.StatusConflict
+	}
+
 	//register user using Email
 	if err2 == nil {
 		user.Email = emailRegisterRequest.Email
 		user.Password, err = utils.HashPassword(emailRegisterRequest.Password)
+		user.Username = emailRegisterRequest.Email
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to hash password")
 			return nil, errors.New("server had an error"), fiber.StatusInternalServerError
@@ -266,6 +276,15 @@ func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegiste
 func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, registerRequest models.RegisterRequest, err1 error, user *models.User, failedRegErrMsg string) (fiber.Map, error, int) {
 	var err error
 
+	//check if user exists
+	_, err = a.userService.GetUserByPhoneNumber(c.Context(), registerRequest.PhoneNumber)
+	if err != nil {
+		a.log.Info().Msg("User does not exist, & can be registered")
+	} else {
+		a.log.Error().Err(err).Msg("User already exists")
+		return nil, err, fiber.StatusConflict
+	}
+
 	//check if PhoneNumber is valid
 	if !(utils.IsValidPhoneNumber(registerRequest.PhoneNumber)) {
 		a.log.Error().Msg("Phone number format is invalid")
@@ -280,6 +299,7 @@ func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, re
 	if err1 == nil {
 		user.PhoneNumber = registerRequest.PhoneNumber
 		user.Password, err = utils.HashPassword(registerRequest.Password)
+		user.Username = registerRequest.PhoneNumber
 		if err != nil {
 			a.log.Error().Err(err).Msg("Failed to hash password")
 			return nil, errors.New("server had an error"), fiber.StatusInternalServerError
