@@ -14,35 +14,46 @@ import (
 )
 
 type userRepository struct {
-	iName             string
-	Collection        *mongo.Collection
-	Log               *zerolog.Logger
-	EncryptionService services.IEncryptionService
+	iName                string
+	Collection           *mongo.Collection
+	Log                  *zerolog.Logger
+	EncryptionService    services.IEncryptionService
+	SearchKeyHashService services.ISearchKeyService
 }
 
-func NewUserRepository(log *zerolog.Logger, db *mongo.Database, encryptSvc services.IEncryptionService) repository.IUserRepository {
+func NewUserRepository(log *zerolog.Logger, db *mongo.Database, encryptSvc services.IEncryptionService, sKeyHashSvc services.ISearchKeyService) repository.IUserRepository {
 	return &userRepository{
-		iName:             "UserRepository",
-		Collection:        db.Collection("users"),
-		Log:               log,
-		EncryptionService: encryptSvc,
+		iName:                "UserRepository",
+		Collection:           db.Collection("users"),
+		Log:                  log,
+		EncryptionService:    encryptSvc,
+		SearchKeyHashService: sKeyHashSvc,
 	}
 }
 
 func (u userRepository) Create(ctx context.Context, user *models.User) (*models.User, error) {
+	//Hash fields used in search
+	err := user.HashFields(u.SearchKeyHashService)
+	if err != nil {
+		u.Log.Error().Err(err).Msg("error hashing user fields")
+		return nil, err
+	}
 	//Encrypt fields before saving
-	err := user.EncryptFields(u.EncryptionService)
+	err = user.EncryptFields(u.EncryptionService)
 	if err != nil {
 		u.Log.Error().Interface("Create", u.iName).Err(err).Msg("error encrypting user")
 		return nil, err
 	}
 
+	// Insert User
 	res, err := u.Collection.InsertOne(ctx, user)
 	if err != nil {
 		u.Log.Error().Interface("Create", u.iName).Err(err).Msg("Failed to create user")
 		return nil, err
 	}
 	user.ID = res.InsertedID.(primitive.ObjectID)
+
+	// Decrypt for use
 	err = user.DecryptFields(u.EncryptionService)
 	if err != nil {
 		u.Log.Error().Interface("Create", u.iName).Err(err).Msg("Failed to decrypt new user")
@@ -78,14 +89,16 @@ func (u userRepository) GetByID(ctx context.Context, id string) (*models.User, e
 func (u userRepository) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	user := &models.User{}
 	// encrypt before search
-	encEmail, err := u.EncryptionService.Encrypt(email)
+	hashedEmail, err := u.SearchKeyHashService.GenerateSearchKey(email)
 	if err != nil {
-		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to encrypt user with Email: " + email)
+		u.Log.Debug().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to hash user Email: " + email)
+		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to hash user Email")
 		return nil, err
 	}
-	err = u.Collection.FindOne(ctx, bson.M{"email": encEmail}).Decode(user)
+	err = u.Collection.FindOne(ctx, bson.M{"emailHash": hashedEmail}).Decode(user)
 	if err != nil {
-		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to find user with email: " + email)
+		u.Log.Debug().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to find user with email: " + email + " :::: " + hashedEmail)
+		u.Log.Error().Interface("GetByEmail", u.iName).Err(err).Msg("Failed to find user with provided email")
 		return nil, err
 	}
 	err = user.DecryptFields(u.EncryptionService)
@@ -99,14 +112,16 @@ func (u userRepository) GetByEmail(ctx context.Context, email string) (*models.U
 func (u userRepository) GetByUsername(ctx context.Context, username string) (*models.User, error) {
 	user := &models.User{}
 	// encrypt before search
-	encUsername, err := u.EncryptionService.Encrypt(username)
+	hashedUsername, err := u.SearchKeyHashService.GenerateSearchKey(username)
 	if err != nil {
-		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to encrypt user with username: " + username)
+		u.Log.Debug().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to hash user with username: " + username + " :::: " + hashedUsername)
+		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to hash username: ")
 		return nil, err
 	}
-	err = u.Collection.FindOne(ctx, bson.M{"username": encUsername}).Decode(user)
+	err = u.Collection.FindOne(ctx, bson.M{"usernameHash": hashedUsername}).Decode(user)
 	if err != nil {
 		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to find user with username: " + username)
+		u.Log.Error().Interface("GetByUsername", u.iName).Err(err).Msg("Failed to find user with provided username")
 		return nil, err
 	}
 	err = user.DecryptFields(u.EncryptionService)
@@ -120,12 +135,13 @@ func (u userRepository) GetByUsername(ctx context.Context, username string) (*mo
 func (u userRepository) GetByPhoneNumber(ctx context.Context, phoneNumber string) (*models.User, error) {
 	user := &models.User{}
 	// encrypt before search
-	encPhoneNumber, err := u.EncryptionService.Encrypt(phoneNumber)
+	hashedPhoneNumber, err := u.SearchKeyHashService.GenerateSearchKey(phoneNumber)
 	if err != nil {
-		u.Log.Error().Interface("GetByPhoneNumber", u.iName).Err(err).Msg("Failed to encrypt user with phoneNumber: " + phoneNumber)
+		u.Log.Error().Interface("GetByPhoneNumber", u.iName).Err(err).
+			Msg("Failed to encrypt user with phoneNumber: " + phoneNumber + " :::: " + hashedPhoneNumber)
 		return nil, err
 	}
-	err = u.Collection.FindOne(ctx, bson.M{"phoneNumber": encPhoneNumber}).Decode(user)
+	err = u.Collection.FindOne(ctx, bson.M{"phoneNumberHash": hashedPhoneNumber}).Decode(user)
 	if err != nil {
 		u.Log.Error().Interface("GetByPhoneNumber", u.iName).Err(err).Msg("Failed to find user with phone number: " + phoneNumber)
 		return nil, err
