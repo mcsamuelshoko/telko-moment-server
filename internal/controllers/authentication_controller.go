@@ -22,6 +22,7 @@ type IAuthenticationController interface {
 }
 
 type AuthenticationController struct {
+	iName           string
 	authService     services.IAuthenticationService
 	log             *zerolog.Logger
 	userService     services.IUserService
@@ -31,6 +32,7 @@ type AuthenticationController struct {
 
 func NewAuthController(log *zerolog.Logger, userSvc services.IUserService, authSvc services.IAuthenticationService, settingsSvc services.ISettingsService, jwtSvc pkgservices.IJWTService) IAuthenticationController {
 	return &AuthenticationController{
+		iName:           "AuthenticationController",
 		log:             log,
 		authService:     authSvc,
 		settingsService: settingsSvc,
@@ -56,24 +58,31 @@ func (a *AuthenticationController) CreateRefreshToken(c *fiber.Ctx) error {
 	if err != nil {
 		msg := "Failed to save refresh token"
 		a.log.Error().Err(err).Msg(msg)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": msg})
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
-	return c.JSON(fiber.Map{"refreshToken": refreshToken})
+	return c.Status(fiber.StatusCreated).JSON(utils.SuccessResponse(fiber.Map{"refreshToken": refreshToken}, "Created Refresh Token"))
 }
 
 func (a *AuthenticationController) UpdateRefreshToken(c *fiber.Ctx) error {
-	refreshToken := c.FormValue("refreshToken")
+	// used by logger
+	const funcName = "UpdateRefreshToken"
 
-	userID, err := a.authService.GetUserIDFromRefreshToken(c.Context(), refreshToken) // Implement this function in your database layer.
+	updateRequest := new(models.UpdateTokenRequest)
+	err := c.BodyParser(updateRequest)
 	if err != nil {
-		a.log.Error().Err(err).Msg("Invalid or expired refresh token")
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg("Failed to parse update-token request")
+	}
+
+	userID, err := a.authService.GetUserIDFromRefreshToken(c.Context(), updateRequest.RefreshToken) // Implement this function in your database layer.
+	if err != nil {
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg("Invalid or expired refresh token")
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid or expired refresh token"))
 	}
 
 	// Verify the refresh token's validity (e.g., check expiration, signature).
-	if !a.jwtService.VerifyRefreshToken(refreshToken) {
-		a.log.Error().Msg("Invalid refresh token")
+	if !a.jwtService.VerifyRefreshToken(updateRequest.RefreshToken) {
+		a.log.Error().Interface(funcName, a.iName).Msg("Invalid refresh token")
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid refresh token"))
 	}
 
@@ -81,21 +90,21 @@ func (a *AuthenticationController) UpdateRefreshToken(c *fiber.Ctx) error {
 	accessToken, err := a.jwtService.GenerateAccessToken(userID) // Generate an access token using your utility function
 	if err != nil {
 		msg := "Failed to generate access token"
-		a.log.Error().Err(err).Msg(msg)
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg(msg)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
 	// Optionally, generate a new refresh token.
 	newRefreshToken, err := a.jwtService.GenerateRefreshToken(userID)
 	if err != nil {
-		a.log.Error().Err(err).Msg("failed to generate new refresh token")
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg("failed to generate new refresh token")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to generate new refresh token"))
 	}
 
 	// Update by replacing the old refresh token with the new one in the database.
 	err = a.authService.UpdateUserRefreshToken(c.Context(), userID, newRefreshToken)
 	if err != nil {
-		a.log.Error().Err(err).Msg("failed to save new refresh token")
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg("failed to save new refresh token")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to save new refresh token"))
 	}
 
@@ -103,13 +112,20 @@ func (a *AuthenticationController) UpdateRefreshToken(c *fiber.Ctx) error {
 }
 
 func (a *AuthenticationController) CancelRefreshToken(c *fiber.Ctx) error {
-	refreshToken := c.FormValue("refreshToken")
+	// used by logger
+	const funcName = "CancelRefreshToken"
+
+	logoutRequest := new(models.LogoutRequest)
+	err := c.BodyParser(logoutRequest)
+	if err != nil {
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg("Failed to parse logout request")
+	}
 
 	// Delete the refresh token from the database.
-	err := a.authService.DeleteRefreshToken(c.Context(), refreshToken) // Implement this function in your database layer.
+	err = a.authService.DeleteRefreshToken(c.Context(), logoutRequest.RefreshToken) // Implement this function in your database layer.
 	if err != nil {
 		msg := "Failed to cancel refresh token"
-		a.log.Error().Err(err).Msg(msg)
+		a.log.Error().Interface(funcName, a.iName).Err(err).Msg(msg)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
@@ -329,6 +345,7 @@ func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, re
 
 func (a *AuthenticationController) createSettingsForUser(c *fiber.Ctx, createdUser *models.User) error {
 	settings := models.GetSettingsDefaultsFromHeaders(utils.GetHeaderMap(c))
+	settings.UserId = createdUser.ID
 	_, err := a.settingsService.Create(c.Context(), settings)
 	if err != nil {
 		a.log.Error().Err(err).Msg("Failed to create user's settings")
