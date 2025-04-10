@@ -15,9 +15,12 @@ type User struct {
 	FirstName          string             `json:"firstName" bson:"firstName"`
 	LastName           string             `json:"lastName" bson:"lastName"`
 	Username           string             `json:"username" bson:"username"`
+	UsernameHash       string             `json:"-" bson:"UsernameHash"`
 	Password           string             `json:"password,omitempty" bson:"password"`
 	Email              string             `json:"email" bson:"email"`
+	EmailHash          string             `json:"-" bson:"emailHash"`
 	PhoneNumber        string             `json:"phoneNumber,omitempty" bson:"phoneNumber,omitempty"`
+	PhoneNumberHash    string             `json:"-" bson:"phoneNumberHash"`
 	UserType           string             `json:"userType" bson:"userType"`
 	ProfilePicture     string             `json:"profilePicture,omitempty" bson:"profilePicture,omitempty"`
 	Status             string             `json:"status" bson:"status"`
@@ -31,34 +34,52 @@ type User struct {
 
 // CreateUniqueIndexes creates unique indexes for username, phoneNumber and email
 func (u *User) CreateUniqueIndexes(db *mongo.Database) error {
-	// Create unique index for username
-	usernameIndex := mongo.IndexModel{
-		Keys:    bson.D{{"username", 1}},
-		Options: options.Index().SetUnique(true).SetName("unique_username"),
+	// Create unique index for username-hash & email+phone-hash
+	usernameHashIndex := mongo.IndexModel{
+		Keys:    bson.D{{"usernameHash", 1}},
+		Options: options.Index().SetUnique(true).SetName("unique_username_hash"),
 	}
 
-	//// Create unique index for email
-	//emailIndex := mongo.IndexModel{
-	//	Keys:    bson.D{{"email", 1}},
-	//	Options: options.Index().SetUnique(true).SetName("unique_email"),
-	//}
-	//
-	//// Create unique index for phoneNumber
-	//phoneNumberIndex := mongo.IndexModel{
-	//	Keys:    bson.D{{"phoneNumber", 1}},
-	//	Options: options.Index().SetUnique(true).SetName("unique_phone_number"),
-	//}
-
-	emailAndPhoneNumberIndex := mongo.IndexModel{
-		Keys:    bson.D{{"email", 1}, {"phoneNumber", 1}},
-		Options: options.Index().SetUnique(true).SetName("unique_email_and_phone_number"),
+	emailAndPhoneNumberHashIndex := mongo.IndexModel{
+		Keys:    bson.D{{"emailHash", 1}, {"phoneNumberHash", 1}},
+		Options: options.Index().SetUnique(true).SetName("unique_email_and_phone_number_hash"),
 	}
 
 	// Create indexes
 	_, err := db.Collection("users").Indexes().
-		CreateMany(context.Background(), []mongo.IndexModel{usernameIndex, emailAndPhoneNumberIndex})
+		CreateMany(context.Background(), []mongo.IndexModel{usernameHashIndex, emailAndPhoneNumberHashIndex})
 
 	return err
+}
+
+// HashFields It is called before EncryptFields so that it will not hash transformed data, it Hashes sensitive fields for easier search,
+// than their encrypted variants which are non-deterministic in their encryption
+func (u *User) HashFields(keyHashSvc services.ISearchKeyService) error {
+	if u.Username != "" {
+		hashed, err := keyHashSvc.GenerateSearchKey(u.Username)
+		if err != nil {
+			return err
+		}
+		u.UsernameHash = hashed
+	}
+
+	if u.Email != "" {
+		hashed, err := keyHashSvc.GenerateSearchKey(u.Email)
+		if err != nil {
+			return err
+		}
+		u.EmailHash = hashed
+	}
+
+	if u.PhoneNumber != "" {
+		hashed, err := keyHashSvc.GenerateSearchKey(u.PhoneNumber)
+		if err != nil {
+			return err
+		}
+		u.PhoneNumberHash = hashed
+	}
+
+	return nil
 }
 
 // EncryptFields Encrypt sensitive fields before saving
@@ -104,13 +125,6 @@ func (u *User) EncryptFields(encSvc services.IEncryptionService) error {
 			return err
 		}
 		u.UserType = encrypted
-	}
-	if u.Password != "" {
-		encrypted, err := encSvc.Encrypt(u.Password)
-		if err != nil {
-			return err
-		}
-		u.Password = encrypted
 	}
 	if u.Bio != "" {
 		encrypted, err := encSvc.Encrypt(u.Bio)
@@ -181,13 +195,6 @@ func (u *User) DecryptFields(encSvc services.IEncryptionService) error {
 		}
 		u.UserType = decrypted
 	}
-	//if u.Password != "" {
-	//	decrypted, err := encSvc.Decrypt(u.Password)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	u.Password = decrypted
-	//}
 	if u.Bio != "" {
 		decrypted, err := encSvc.Decrypt(u.Bio)
 		if err != nil {
