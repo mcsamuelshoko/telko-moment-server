@@ -7,29 +7,30 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type userService interface {
-	CreateUser(ctx context.Context, user *models.User) error
+type IUserService interface {
+	CreateUser(ctx context.Context, user *models.User) (*models.User, error)
 	GetUserByID(ctx context.Context, id string) (*models.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*models.User, error)
 	ListUsers(ctx context.Context, page, limit int) ([]models.User, error)
-	UpdateUser(ctx context.Context, user *models.User) error
+	UpdateUser(ctx context.Context, user *models.User) (*models.User, error)
 	DeleteUser(ctx context.Context, id string) error
 }
 
 type UserService struct {
 	log  *zerolog.Logger
-	repo repository.UserRepository
+	repo repository.IUserRepository
 }
 
-func NewUserService(log *zerolog.Logger, repo repository.UserRepository) *UserService {
+func NewUserService(log *zerolog.Logger, repo repository.IUserRepository) IUserService {
 	return &UserService{
 		log:  log,
 		repo: repo,
 	}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
+func (s *UserService) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	//// Add business logic here
 	//user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	//user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
@@ -51,11 +52,15 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*models
 	return s.repo.GetByEmail(ctx, email)
 }
 
+func (s *UserService) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*models.User, error) {
+	return s.repo.GetByPhoneNumber(ctx, phoneNumber)
+}
+
 func (s *UserService) ListUsers(ctx context.Context, page, limit int) ([]models.User, error) {
 	return s.repo.List(ctx, page, limit)
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, user *models.User) error {
+func (s *UserService) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	return s.repo.Update(ctx, user)
 }
 
