@@ -133,38 +133,55 @@ func (a *AuthenticationController) CancelRefreshToken(c *fiber.Ctx) error {
 }
 
 func (a *AuthenticationController) Login(c *fiber.Ctx) error {
-	loginRequest := new(models.LoginRequest)
+	//loginRequest := new(models.LoginRequestUsername)
+	//if err := c.BodyParser(loginRequest); err != nil {
+	//	a.log.Error().Err(err).Msg("Failed to parse login request")
+	//	return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
+	//}
+	//
+	//user, err := a.userService.GetUserByUsername(c.Context(), loginRequest.Username)
+	//if err != nil {
+	//	a.log.Error().Err(err).Str("username", loginRequest.Username).Msg("User not found")
+	//	return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid credentials"))
+	//}
+	//
+	//if !utils.CheckPasswordHash(loginRequest.Password, user.Password) {
+	//	a.log.Error().Str("username", loginRequest.Username).Msg("Invalid password")
+	//	return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid credentials"))
+	//}
+
+	loginRequest := new(models.LoginRequestEmail)
 	if err := c.BodyParser(loginRequest); err != nil {
 		a.log.Error().Err(err).Msg("Failed to parse login request")
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
 
-	user, err := a.userService.GetUserByUsername(c.Context(), loginRequest.Username)
+	user, err := a.userService.GetUserByEmail(c.Context(), loginRequest.Email)
 	if err != nil {
-		a.log.Error().Err(err).Str("username", loginRequest.Username).Msg("User not found")
+		a.log.Error().Err(err).Str("email", loginRequest.Email).Msg("User not found")
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid credentials"))
 	}
 
 	if !utils.CheckPasswordHash(loginRequest.Password, user.Password) {
-		a.log.Error().Str("username", loginRequest.Username).Msg("Invalid password")
+		a.log.Error().Str("email", loginRequest.Email).Msg("Invalid password")
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid credentials"))
 	}
 
-	accessToken, err := a.jwtService.GenerateAccessToken(user.ID.String())
+	accessToken, err := a.jwtService.GenerateAccessToken(user.ID.Hex())
 	if err != nil {
 		msg := "Failed to generate access token"
 		a.log.Error().Err(err).Msg(msg)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
-	refreshToken, err := a.jwtService.GenerateRefreshToken(user.ID.String())
+	refreshToken, err := a.jwtService.GenerateRefreshToken(user.ID.Hex())
 	if err != nil {
 		msg := "Failed to generate refresh token"
 		a.log.Error().Err(err).Msg(msg)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
-	err = a.authService.SaveRefreshToken(c.Context(), user.ID.String(), refreshToken)
+	err = a.authService.SaveRefreshToken(c.Context(), user.ID.Hex(), refreshToken)
 	if err != nil {
 		msg := "Failed to save refresh token"
 		a.log.Error().Err(err).Msg(msg)
@@ -250,6 +267,7 @@ func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegiste
 	if err != nil {
 		a.log.Info().Msg("User does not exist, & can be registered")
 	} else {
+		err = errors.New("email has already been used, please try another one")
 		a.log.Error().Err(err).Msg("User already exists")
 		return nil, err, fiber.StatusConflict
 	}
@@ -297,6 +315,7 @@ func (a *AuthenticationController) registrationUsingPhoneNumber(c *fiber.Ctx, re
 	if err != nil {
 		a.log.Info().Msg("User does not exist, & can be registered")
 	} else {
+		err = errors.New("phone number has already been used, please try another one")
 		a.log.Error().Err(err).Msg("User already exists")
 		return nil, err, fiber.StatusConflict
 	}
