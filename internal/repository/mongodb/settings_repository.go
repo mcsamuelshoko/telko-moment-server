@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,36 +13,39 @@ import (
 
 type settingsRepository struct {
 	Collection *mongo.Collection
+	Logger     *zerolog.Logger
 }
 
-func NewSettingsRepository(db *mongo.Database) repository.SettingsRepository {
+func NewSettingsRepository(log *zerolog.Logger, db *mongo.Database) repository.SettingsRepository {
 	return &settingsRepository{
 		Collection: db.Collection("settings"),
+		Logger:     log,
 	}
 }
 
-func (s settingsRepository) Create(ctx context.Context, settings *models.Settings) error {
-	_, err := s.Collection.InsertOne(ctx, settings)
+func (s settingsRepository) Create(ctx context.Context, settings *models.Settings) (*models.Settings, error) {
+	result, err := s.Collection.InsertOne(ctx, settings)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create settings")
-		return err
+		s.Logger.Error().Err(err).Msg("failed to create settings")
+		return nil, err
 	}
-	return nil
+	settings.Id = result.InsertedID.(primitive.ObjectID)
+	return settings, nil
 }
 
 func (s settingsRepository) GetByID(ctx context.Context, id string) (*models.Settings, error) {
 	// settings ID to search for
 	settingsID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to convert settings id to object id")
-		log.Debug().Err(err).Msg("failed to convert GetByID id:" + id)
+		s.Logger.Error().Err(err).Msg("failed to convert settings id to object id")
+		s.Logger.Debug().Err(err).Msg("failed to convert GetByID id:" + id)
 		return nil, err
 	}
 
 	settings := &models.Settings{}
 	err = s.Collection.FindOne(ctx, bson.M{"_id": settingsID}).Decode(settings)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to find settings with id: " + id)
+		s.Logger.Error().Err(err).Msg("failed to find settings with id: " + id)
 		return nil, err
 	}
 	return settings, nil
@@ -53,15 +56,15 @@ func (s settingsRepository) GetByUserID(ctx context.Context, userId string) (*mo
 	// user ID to search for
 	userID, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to convert userId to object id")
-		log.Debug().Err(err).Msg("failed to convert GetByUserID id:" + userId)
+		s.Logger.Error().Err(err).Msg("failed to convert userId to object id")
+		s.Logger.Debug().Err(err).Msg("failed to convert GetByUserID id:" + userId)
 		return nil, err
 	}
 
 	settings := &models.Settings{}
 	err = s.Collection.FindOne(ctx, bson.M{"userId": userID}).Decode(settings)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to find settings with id: " + userId)
+		s.Logger.Error().Err(err).Msg("failed to find settings with id: " + userId)
 		return nil, err
 	}
 	return settings, nil
@@ -79,7 +82,7 @@ func (s settingsRepository) List(ctx context.Context, page, limit int) ([]models
 	// Execute the find operation with options
 	cursor, err := s.Collection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to query settings")
+		s.Logger.Error().Err(err).Msg("failed to query settings")
 		return nil, err
 	}
 
@@ -87,14 +90,14 @@ func (s settingsRepository) List(ctx context.Context, page, limit int) ([]models
 	defer func(cursor *mongo.Cursor, ctx context.Context) {
 		err := cursor.Close(ctx)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to close cursor")
+			s.Logger.Error().Err(err).Msg("failed to close cursor")
 		}
 	}(cursor, ctx)
 
 	// Parse all the documents
 	var settingsList []models.Settings
 	if err = cursor.All(ctx, &settingsList); err != nil {
-		log.Error().Err(err).Msg("failed to decode settingsList")
+		s.Logger.Error().Err(err).Msg("failed to decode settingsList")
 		return nil, err
 	}
 
@@ -112,7 +115,7 @@ func (s settingsRepository) Update(ctx context.Context, settings *models.Setting
 	// Execute the update operation
 	_, err := s.Collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update settings with id: " + settings.Id.String())
+		s.Logger.Error().Err(err).Msg("failed to update settings with id: " + settings.Id.String())
 		return err
 	}
 
@@ -123,13 +126,13 @@ func (s settingsRepository) Delete(ctx context.Context, id string) error {
 	// settings ID to search for
 	settingsID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to convert Settings, Delete id to object id")
-		log.Debug().Err(err).Msg("failed to convert Settings Delete id:" + id)
+		s.Logger.Error().Err(err).Msg("failed to convert Settings, Delete id to object id")
+		s.Logger.Debug().Err(err).Msg("failed to convert Settings Delete id:" + id)
 		return err
 	}
 	_, err = s.Collection.DeleteOne(ctx, bson.M{"_id": settingsID})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to delete settings with id: " + id)
+		s.Logger.Error().Err(err).Msg("failed to delete settings with id: " + id)
 		return err
 	}
 	return nil
