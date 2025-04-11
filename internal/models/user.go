@@ -52,8 +52,8 @@ func (u *User) CreateUniqueIndexes(db *mongo.Database) error {
 	return err
 }
 
-// HashFields It is called before EncryptFields so that it will not hash transformed data, it Hashes sensitive fields for easier search,
-// than their encrypted variants which are non-deterministic in their encryption
+// HashFields It is called before EncryptFields so that it will not hash already transformed data, it Hashes sensitive fields for easier search,
+// than to search their encrypted variants which are non-deterministic in their encryption
 func (u *User) HashFields(keyHashSvc services.ISearchKeyService) error {
 	if u.Username != "" {
 		hashed, err := keyHashSvc.GenerateSearchKey(u.Username)
