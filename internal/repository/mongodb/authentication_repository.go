@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
-	"github.com/mcsamuelshoko/telko-moment-server/pkg/utils"
+	"github.com/mcsamuelshoko/telko-moment-server/pkg/services"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 
@@ -19,20 +19,28 @@ import (
 type AuthenticationRepository struct {
 	Collection        *mongo.Collection
 	Logger            *zerolog.Logger
-	EncryptionService utils.IEncryptionService
+	EncryptionService services.IEncryptionService
+	SearchKeyHashSvc  services.ISearchKeyService
 }
 
-func NewAuthenticationRepository(log *zerolog.Logger, db *mongo.Database, encryptSvc utils.IEncryptionService) repository.IAuthenticationRepository {
+func NewAuthenticationRepository(log *zerolog.Logger, db *mongo.Database, encryptSvc services.IEncryptionService, keyHashSvc services.ISearchKeyService) repository.IAuthenticationRepository {
 	return &AuthenticationRepository{
 		Collection:        db.Collection("authentications"),
 		Logger:            log,
 		EncryptionService: encryptSvc,
+		SearchKeyHashSvc:  keyHashSvc,
 	}
 }
 
 func (a AuthenticationRepository) Create(ctx context.Context, auth *models.Authentication) (*models.Authentication, error) {
+	// Hash fields
+	err := auth.HashFields(a.SearchKeyHashSvc)
+	if err != nil {
+		a.Logger.Error().Err(err).Msg("error hashing authentication fields")
+		return nil, err
+	}
 	// Encrypt sensitive fields before saving
-	if err := auth.EncryptFields(a.EncryptionService); err != nil {
+	if err = auth.EncryptFields(a.EncryptionService); err != nil {
 		a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.Create")
 		return nil, err
 	}
@@ -160,16 +168,40 @@ func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID s
 		a.Logger.Debug().Err(err).Msg("Failed to convert id:" + userID)
 		return err
 	}
+	// search if user already exists
+	var auth models.Authentication
+	err = a.Collection.FindOne(ctx, bson.M{"userId": ID}).Decode(&auth)
+	if err != nil {
+		a.Logger.Error().Err(err).Str("userID", userID).Msg("Failed to get authentication by user ID")
+		// creating new auth object for user
+		auth = *models.GetAuthenticationDefaults()
+		a.Logger.Info().Str("userID", userID).Msg("Created new authentication from defaults")
+	}
+
+	// Hash field(s) for search
+	refreshTokenHash, err := a.SearchKeyHashSvc.GenerateSearchKey(refreshToken)
+	if err != nil {
+		a.Logger.Error().Err(err).Msg("Failed to generate search key")
+		return err
+	}
 	// Encrypt Refresh Token before saving
-	refreshToken, err = a.EncryptionService.Encrypt(refreshToken)
+	encRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
 	if err != nil {
 		a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token in AuthenticationRepository.SaveRefreshToken")
 		return err
 	}
 
+	// Assign to Fields
+	auth.RefreshToken = encRefreshToken
+	auth.RefreshTokenHash = refreshTokenHash
+	auth.UpdatedAt = time.Now()
+	auth.LastLogin = time.Now()
+	auth.ExpiresAt = time.Now().Add(time.Hour * 24 * 7) //TODO make sure this token refresh time is not hard coded
+
+	// Prepare query and update
 	opts := options.Update().SetUpsert(true)
 	filter := bson.M{"userId": ID}
-	update := bson.D{{"$set", bson.M{"token": refreshToken, "updatedAt": time.Now()}}}
+	update := bson.D{{"$set", auth}}
 
 	_, err = a.Collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
@@ -185,18 +217,18 @@ func (a AuthenticationRepository) GetUserIDFromRefreshToken(ctx context.Context,
 		return "", fmt.Errorf("refresh token cannot be empty")
 	}
 
-	// Encrypt token for search
-	encryptedRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
+	// Hash token for search
+	hashedRefreshToken, err := a.SearchKeyHashSvc.GenerateSearchKey(refreshToken)
 	if err != nil {
-		a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token")
+		a.Logger.Error().Err(err).Msg("Failed to hash refresh token")
 		return "", err
 	}
 	var result models.Authentication
 
 	// Find the token document
 	err = a.Collection.FindOne(ctx, bson.M{
-		"refreshToken": encryptedRefreshToken,
-		"is_active":    true, // Only match active tokens
+		"refreshTokenHash": hashedRefreshToken,
+		"is_active":        true, // Only match active tokens
 		"expires_at": bson.M{
 			"$gt": time.Now(), // Only match non-expired tokens
 		},
@@ -211,12 +243,12 @@ func (a AuthenticationRepository) GetUserIDFromRefreshToken(ctx context.Context,
 		return "", err
 	}
 
-	if result.UserID.String() == "" {
+	if result.UserID.Hex() == "" {
 		a.Logger.Warn().Str("refreshToken", refreshToken).Msg("Refresh token found but user ID is empty")
 		return "", fmt.Errorf("invalid refresh token: no user associated")
 	}
 
-	return result.UserID.String(), nil
+	return result.UserID.Hex(), nil
 }
 
 func (a AuthenticationRepository) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
