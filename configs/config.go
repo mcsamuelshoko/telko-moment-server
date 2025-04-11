@@ -2,7 +2,6 @@ package configs
 
 import (
 	"github.com/joho/godotenv"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/rs/zerolog/log"
 	"os"
 	"path/filepath"
@@ -25,6 +24,9 @@ type Config struct {
 	Encryption struct {
 		AESKey string `env:"ENC_AES_KEY" envDefault:"0123456789abcdef"`
 	} `json:"encryption"`
+	Hashing struct {
+		HMACSecretKey string `env:"HMAC_SECRET_KEY" envDefault:"0123456789abcdef"`
+	} `json:"hashing"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -44,17 +46,19 @@ func LoadConfig() (*Config, error) {
 
 	var config Config
 
-	// Load configuration from environment variables or default values
-	err = envconfig.Process("", &config)
-	if err != nil {
-		log.Error().Err(err).Msg("Error loading configuration")
-		return nil, err
-	}
 	// Load the ones left by -> envconfig.Process()
+	config.MongoDB.Database = os.Getenv("MONGODB_DB")
+	config.MongoDB.URI = os.Getenv("MONGODB_URI")
+
+	config.Server.Port = os.Getenv("SERVER_PORT")
+
+	config.Jwt.Secret = os.Getenv("JWT_SECRET")
 	config.Jwt.RefreshTokenSecret = os.Getenv("JWT_REFRESH_TOKEN_SECRET")
 	config.Jwt.RefreshTokenDuration = os.Getenv("JWT_REFRESH_TOKEN_DURATION")
 
 	config.Encryption.AESKey = os.Getenv("ENC_AES_KEY")
+
+	config.Hashing.HMACSecretKey = os.Getenv("HMAC_SECRET_KEY")
 
 	// Return the loaded configuration
 	return &config, nil
