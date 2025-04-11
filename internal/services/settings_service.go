@@ -6,8 +6,8 @@ import (
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 )
 
-type settingsService interface {
-	Create(ctx context.Context, settings *models.Settings) error
+type ISettingsService interface {
+	Create(ctx context.Context, settings *models.Settings) (*models.Settings, error)
 	GetById(ctx context.Context, settingsId string) (*models.Settings, error)
 	GetByUserId(ctx context.Context, userId string) (*models.Settings, error)
 	Update(ctx context.Context, settings *models.Settings) error
@@ -18,13 +18,13 @@ type SettingsService struct {
 	repo repository.SettingsRepository
 }
 
-func NewSettingsService(repo repository.SettingsRepository) *SettingsService {
+func NewSettingsService(repo repository.SettingsRepository) ISettingsService {
 	return &SettingsService{
 		repo: repo,
 	}
 }
 
-func (s *SettingsService) Create(ctx context.Context, settings *models.Settings) error {
+func (s *SettingsService) Create(ctx context.Context, settings *models.Settings) (*models.Settings, error) {
 	return s.repo.Create(ctx, settings)
 }
 
