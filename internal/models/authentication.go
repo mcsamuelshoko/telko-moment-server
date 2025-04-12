@@ -14,7 +14,6 @@ import (
 type Authentication struct {
 	ID               primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	UserID           primitive.ObjectID `json:"userId,omitempty" bson:"userId,omitempty"`
-	RefreshToken     string             `json:"refreshToken,omitempty" bson:"refreshToken,omitempty"`
 	RefreshTokenHash string             `json:"-" bson:"refreshTokenHash,omitempty"`
 	IsActive         bool               `json:"isActive" bson:"isActive"`
 	ExpiresAt        time.Time          `json:"expiresAt" bson:"expiresAt"`
@@ -48,37 +47,37 @@ func (a *Authentication) CreateUniqueIndexes(db *mongo.Database) error {
 // HashFields It is called before EncryptFields so that it will not hash already transformed data, it Hashes sensitive fields for easier search,
 // than to search their encrypted variants which are non-deterministic in their encryption
 func (a *Authentication) HashFields(keyHashSvc services.ISearchKeyService) error {
-	if a.RefreshToken != "" {
-		hashed, err := keyHashSvc.GenerateSearchKey(a.RefreshToken)
-		if err != nil {
-			return err
-		}
-		a.RefreshTokenHash = hashed
-	}
+	//if refreshToken != "" {
+	//	hashed, err := keyHashSvc.GenerateSearchKey(refreshToken)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	a.RefreshTokenHash = hashed
+	//}
 	return nil
 }
 
 // EncryptFields Encrypt sensitive fields before saving
 func (a *Authentication) EncryptFields(encSvc services.IEncryptionService) error {
-	if a.RefreshToken != "" {
-		encrypted, err := encSvc.Encrypt(a.RefreshToken)
-		if err != nil {
-			return err
-		}
-		a.RefreshToken = encrypted
-	}
+	//if a.RefreshToken != "" {
+	//	encrypted, err := encSvc.Encrypt(a.RefreshToken)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	a.RefreshToken = encrypted
+	//}
 	return nil
 }
 
 // DecryptFields Decrypt sensitive fields after retrieval
 func (a *Authentication) DecryptFields(encSvc services.IEncryptionService) error {
-	if a.RefreshToken != "" {
-		decrypted, err := encSvc.Decrypt(a.RefreshToken)
-		if err != nil {
-			return err
-		}
-		a.RefreshToken = decrypted
-	}
+	//if a.RefreshToken != "" {
+	//	decrypted, err := encSvc.Decrypt(a.RefreshToken)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	a.RefreshToken = decrypted
+	//}
 	return nil
 }
 
