@@ -4,12 +4,13 @@ import (
 	"context"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 	"github.com/rs/zerolog"
+	"time"
 )
 
 type IAuthenticationService interface {
-	SaveRefreshToken(ctx context.Context, userID string, refreshToken string) error
+	SaveRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error
 	GetUserIDFromRefreshToken(ctx context.Context, refreshToken string) (string, error)
-	UpdateUserRefreshToken(ctx context.Context, userID string, refreshToken string) error
+	UpdateUserRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error
 	DeleteRefreshToken(ctx context.Context, refreshToken string) error
 }
 
@@ -25,8 +26,8 @@ func NewAuthenticationService(log *zerolog.Logger, repo repository.IAuthenticati
 	}
 }
 
-func (a AuthenticationService) SaveRefreshToken(ctx context.Context, userID string, refreshToken string) error {
-	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken)
+func (a AuthenticationService) SaveRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error {
+	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken, tokenDuration)
 	if err != nil {
 		a.log.Error().Err(err).Str("userID", userID).Msg("Failed to save refresh token")
 		return err
@@ -43,8 +44,8 @@ func (a AuthenticationService) GetUserIDFromRefreshToken(ctx context.Context, re
 	return userID, nil
 }
 
-func (a AuthenticationService) UpdateUserRefreshToken(ctx context.Context, userID string, refreshToken string) error {
-	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken)
+func (a AuthenticationService) UpdateUserRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error {
+	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken, tokenDuration)
 	if err != nil {
 		a.log.Error().Err(err).Str("userID", userID).Msg("Failed to update refresh token")
 		return err

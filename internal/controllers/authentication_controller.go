@@ -54,7 +54,7 @@ func (a *AuthenticationController) CreateRefreshToken(c *fiber.Ctx) error {
 	}
 
 	// Store the refresh token in the database, associating it with the user.
-	err = a.authService.SaveRefreshToken(c.Context(), userID, refreshToken) // Implement this function in your database layer.
+	err = a.authService.SaveRefreshToken(c.Context(), userID, refreshToken, a.jwtService.GetRefreshTokenDuration()) // Implement this function in your database layer.
 	if err != nil {
 		msg := "Failed to save refresh token"
 		a.log.Error().Err(err).Msg(msg)
@@ -102,7 +102,7 @@ func (a *AuthenticationController) UpdateRefreshToken(c *fiber.Ctx) error {
 	}
 
 	// Update by replacing the old refresh token with the new one in the database.
-	err = a.authService.UpdateUserRefreshToken(c.Context(), userID, newRefreshToken)
+	err = a.authService.UpdateUserRefreshToken(c.Context(), userID, newRefreshToken, a.jwtService.GetRefreshTokenDuration())
 	if err != nil {
 		a.log.Error().Interface(funcName, a.iName).Err(err).Msg("failed to save new refresh token")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to save new refresh token"))
@@ -181,7 +181,7 @@ func (a *AuthenticationController) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
-	err = a.authService.SaveRefreshToken(c.Context(), user.ID.Hex(), refreshToken)
+	err = a.authService.SaveRefreshToken(c.Context(), user.ID.Hex(), refreshToken, a.jwtService.GetRefreshTokenDuration())
 	if err != nil {
 		msg := "Failed to save refresh token"
 		a.log.Error().Err(err).Msg(msg)

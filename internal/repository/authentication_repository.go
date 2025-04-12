@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
+	"time"
 )
 
 type IAuthenticationRepository interface {
@@ -14,7 +15,7 @@ type IAuthenticationRepository interface {
 	Delete(ctx context.Context, ID string) error
 	DeleteByUserID(ctx context.Context, userID string) error
 
-	SaveRefreshToken(ctx context.Context, userID string, refreshToken string) error
+	SaveRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error
 	GetUserIDFromRefreshToken(ctx context.Context, refreshToken string) (string, error)
 	DeleteRefreshToken(ctx context.Context, refreshToken string) error
 }
