@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mcsamuelshoko/telko-moment-server/configs"
 	"github.com/rs/zerolog"
+	"strconv"
 	"time"
 )
 
@@ -16,13 +17,15 @@ type IJWTService interface {
 	GenerateRefreshToken(userID string) (string, error)
 	VerifyAccessToken(tokenString string) (*jwt.Token, error)
 	VerifyRefreshToken(tokenString string) bool
+	GetRefreshTokenDuration() time.Duration
 }
 
 type JWTService struct {
-	jwtSecret             []byte // In production, fetch this from a secure KMS
-	jwtRefreshTokenSecret []byte
-	jwtTokenDuration      time.Duration
-	log                   *zerolog.Logger
+	jwtSecret               []byte // In production, fetch this from a secure KMS
+	jwtTokenDuration        time.Duration
+	jwtRefreshTokenSecret   []byte
+	jwtRefreshTokenDuration time.Duration
+	log                     *zerolog.Logger
 }
 
 func NewJWTService(logger *zerolog.Logger, cfg configs.JwtConfig) (*JWTService, error) {
@@ -32,30 +35,43 @@ func NewJWTService(logger *zerolog.Logger, cfg configs.JwtConfig) (*JWTService, 
 		return nil, errors.New("invalid JWT secret key: must be a hex-encoded string of at least 32 bytes")
 	}
 
+	duration, err := time.ParseDuration(cfg.TokenDuration)
+	if err != nil {
+		logger.Error().Err(err).Msg("Invalid JWT Token Duration")
+		return nil, errors.New("invalid JWT token duration string")
+	}
+
 	refreshSecret, err := hex.DecodeString(cfg.RefreshTokenSecret)
 	if err != nil || len(refreshSecret) < 32 {
 		logger.Error().Err(err).Msg("Invalid JWT Refresh Secret")
 		return nil, errors.New("invalid refresh JWT secret key: must be a hex-encoded string of at least 32 bytes")
 	}
 
-	duration, err := time.ParseDuration(cfg.RefreshTokenDuration)
+	refreshDuration, err := time.ParseDuration(cfg.RefreshTokenDuration)
 	if err != nil {
 		logger.Error().Err(err).Msg("Invalid JWT Refresh Duration")
-		return nil, errors.New("invalid JWT duration string")
+		return nil, errors.New("invalid JWT refresh-token duration string")
+	}
+
+	refreshDaysMultiplier, err := strconv.Atoi(cfg.RefreshTokenDaysMultiplier)
+	if err != nil {
+		logger.Error().Err(err).Msg("Invalid JWT Refresh Days-Multiplier")
+		return nil, errors.New("invalid JWT refresh-token days-multiplier duration string")
 	}
 
 	return &JWTService{
-		jwtSecret:             secret,
-		jwtRefreshTokenSecret: refreshSecret,
-		jwtTokenDuration:      duration,
-		log:                   logger,
+		jwtSecret:               secret,
+		jwtRefreshTokenSecret:   refreshSecret,
+		jwtTokenDuration:        duration,
+		jwtRefreshTokenDuration: refreshDuration * time.Duration(refreshDaysMultiplier),
+		log:                     logger,
 	}, nil
 }
 
 func (j *JWTService) GenerateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Minute * 15).Unix(), // Access token expires in 15 minutes
+		"exp": time.Now().Add(j.jwtTokenDuration).Unix(), // Access token expiration
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -65,7 +81,7 @@ func (j *JWTService) GenerateAccessToken(userID string) (string, error) {
 func (j *JWTService) GenerateRefreshToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(), // Refresh token expires in 7 days
+		"exp": time.Now().Add(j.jwtRefreshTokenDuration).Unix(), // Refresh token expiration
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -103,4 +119,8 @@ func (j *JWTService) VerifyRefreshToken(tokenString string) bool {
 		return false
 	}
 	return true
+}
+
+func (j *JWTService) GetRefreshTokenDuration() time.Duration {
+	return j.jwtRefreshTokenDuration
 }
