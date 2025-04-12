@@ -34,16 +34,16 @@ func NewAuthenticationRepository(log *zerolog.Logger, db *mongo.Database, encryp
 
 func (a AuthenticationRepository) Create(ctx context.Context, auth *models.Authentication) (*models.Authentication, error) {
 	// Hash fields
-	err := auth.HashFields(a.SearchKeyHashSvc)
-	if err != nil {
-		a.Logger.Error().Err(err).Msg("error hashing authentication fields")
-		return nil, err
-	}
+	//err := auth.HashFields(a.SearchKeyHashSvc,"")
+	//if err != nil {
+	//	a.Logger.Error().Err(err).Msg("error hashing authentication fields")
+	//	return nil, err
+	//}
+
 	// Encrypt sensitive fields before saving
-	if err = auth.EncryptFields(a.EncryptionService); err != nil {
-		a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.Create")
-		return nil, err
-	}
+	//if err = auth.EncryptFields(a.EncryptionService); err != nil {
+	//	a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.Create")
+	//	return nil, err
 
 	result, err := a.Collection.InsertOne(ctx, auth)
 	if err != nil {
@@ -68,23 +68,23 @@ func (a AuthenticationRepository) GetList(ctx context.Context) (*[]models.Authen
 	}(cursor, ctx)
 
 	var authList []models.Authentication
-	var decryptedAuthList []models.Authentication
+	//var decryptedAuthList []models.Authentication
 	if err := cursor.All(ctx, &authList); err != nil {
 		a.Logger.Error().Err(err).Msg("Failed to decode authentication list")
 		return nil, err
 	}
 
 	//Decrypt List before sharing to user
-	for _, authentication := range authList {
-		// Encrypt sensitive fields before saving
-		if err := authentication.EncryptFields(a.EncryptionService); err != nil {
-			a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.GetList")
-			return nil, err
-		}
-		decryptedAuthList = append(decryptedAuthList, authentication)
-	}
+	//for _, authentication := range authList {
+	//	// Encrypt sensitive fields before saving
+	//	if err := authentication.DecryptFields(a.EncryptionService); err != nil {
+	//		a.Logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetList")
+	//		return nil, err
+	//	}
+	//	decryptedAuthList = append(decryptedAuthList, authentication)
+	//}
 
-	return &decryptedAuthList, nil
+	return &authList, nil
 }
 
 func (a AuthenticationRepository) GetByUserID(ctx context.Context, userID string) (*models.Authentication, error) {
@@ -101,10 +101,10 @@ func (a AuthenticationRepository) GetByUserID(ctx context.Context, userID string
 		return nil, err
 	}
 	// Decrypt sensitive fields before sharing
-	if err := auth.DecryptFields(a.EncryptionService); err != nil {
-		a.Logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetByUserID")
-		return nil, err
-	}
+	//if err := auth.DecryptFields(a.EncryptionService); err != nil {
+	//	a.Logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetByUserID")
+	//	return nil, err
+	//}
 	return &auth, nil
 }
 
@@ -116,10 +116,10 @@ func (a AuthenticationRepository) UpdateByUserID(ctx context.Context, userID str
 		return nil, err
 	}
 	// Encrypt sensitive fields before saving
-	if err := auth.EncryptFields(a.EncryptionService); err != nil {
-		a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.UpdateByUserID")
-		return nil, err
-	}
+	//if err := auth.EncryptFields(a.EncryptionService); err != nil {
+	//	a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.UpdateByUserID")
+	//	return nil, err
+	//}
 
 	filter := bson.M{"userId": ID}
 	update := bson.M{"$set": auth}
@@ -161,7 +161,7 @@ func (a AuthenticationRepository) DeleteByUserID(ctx context.Context, userID str
 }
 
 // SaveRefreshToken updates refresh token and adds a fresh one if it does not exist for the user
-func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID string, refreshToken string) error {
+func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error {
 	ID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		a.Logger.Error().Err(err).Msg("Failed to convert id to object id")
@@ -185,18 +185,18 @@ func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID s
 		return err
 	}
 	// Encrypt Refresh Token before saving
-	encRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
-	if err != nil {
-		a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token in AuthenticationRepository.SaveRefreshToken")
-		return err
-	}
+	//encRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
+	//if err != nil {
+	//	a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token in AuthenticationRepository.SaveRefreshToken")
+	//	return err
+	//}
 
 	// Assign to Fields
-	auth.RefreshToken = encRefreshToken
+	//auth.RefreshToken = encRefreshToken
 	auth.RefreshTokenHash = refreshTokenHash
 	auth.UpdatedAt = time.Now()
 	auth.LastLogin = time.Now()
-	auth.ExpiresAt = time.Now().Add(time.Hour * 24 * 7) //TODO make sure this token refresh time is not hard coded
+	auth.ExpiresAt = time.Now().Add(tokenDuration)
 
 	// Prepare query and update
 	opts := options.Update().SetUpsert(true)
@@ -252,13 +252,13 @@ func (a AuthenticationRepository) GetUserIDFromRefreshToken(ctx context.Context,
 }
 
 func (a AuthenticationRepository) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
-	// Encrypt token for search
-	encryptedRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
+	// Hash token for search
+	hashedRefreshToken, err := a.SearchKeyHashSvc.GenerateSearchKey(refreshToken)
 	if err != nil {
-		a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token")
+		a.Logger.Error().Err(err).Msg("Failed to hash refresh token")
 		return err
 	}
-	_, err = a.Collection.DeleteOne(ctx, bson.M{"token": encryptedRefreshToken})
+	_, err = a.Collection.DeleteOne(ctx, bson.M{"refreshTokenHash": hashedRefreshToken})
 	if err != nil {
 		a.Logger.Error().Err(err).Str("refreshToken", refreshToken).Msg("Failed to delete refresh token")
 		return err
