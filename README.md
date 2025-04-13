@@ -20,14 +20,12 @@
 - REST APIs [<https://www.ibm.com/think/topics/rest-apis>]
 - Api Management [<https://www.ibm.com/think/topics/api-management>]
 
+
+- Casbin for ABAC : [<https://casbin.org/>]
+  - Golang Repo: [<https://github.com/casbin/casbin>]
+  - White paper: [<https://arxiv.org/abs/1903.09756>]
 ---
 
-- AIs used in making this app
-  - Claude 3.5 & 3.6 (anthropic) ⭐⭐⭐⭐⭐
-  - Grok 3 Beta    ⭐⭐⭐⭐⭐
-  - Gemini (google)              ⭐⭐⭐
-
----
 
 ### Running the App
 
@@ -52,7 +50,7 @@ oapi-codegen -package=api -generate "types,spec,fiber" oapi_codegen.yml > api/ap
 >   2. **media-server** :  for handling media files or basically files
 > - _*more information on this will be found in the documentation folder_
 > - figma links for the designs:
->   1. **user maps & personas:**   &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/SBMlL6FtJD69ajJFPGJToU/Telko-moment-%7C-user-map-%26-User-personas?t=eWpYCmGxitRb2tc7-1)
+>   1. **auth maps & personas:**   &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/SBMlL6FtJD69ajJFPGJToU/Telko-moment-%7C-auth-map-%26-User-personas?t=eWpYCmGxitRb2tc7-1)
 >   2. **wire frame & prototype**  &nbsp;&nbsp; [visit 🔗](https://www.figma.com/file/ZuSQwcxKaC3hUuFuSnsCqK/Telko-moment-%7C-wireframe-%26-Prototype?t=eWpYCmGxitRb2tc7-1)
 
 ## Requirements
@@ -108,7 +106,7 @@ chat-app/
 ├── internal/
 │   ├── models/
 │   │   ├── message.go        # Message data structures
-│   │   └── user.go          # User data structures
+│   │   └── auth.go          # User data structures
 │   ├── controllers/
 │   │   ├── auth_controller.go          # Authentication controllers
 │   │   ├── message_controller.go       # Message controllers
@@ -180,3 +178,13 @@ This structure follows these key Go principles:
 ### Packages
 
 - fiberi18n: [<https://github.com/gofiber/contrib/tree/main/fiberi18n>]
+
+---
+
+### Use of AI
+- AIs have been used in making this app (well; it is 2025 and an extra hand/boost won't hurt) .... although it doesn't control anything or take lead, only for quick questions and some boring but necessary stuff
+    - Claude 3.5 & 3.6 (anthropic) 
+    - Grok 3 Beta    
+    - Gemini (google)
+
+---
