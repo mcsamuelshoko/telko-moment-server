@@ -17,7 +17,7 @@ info:
 
 
 servers:
-  - url: http://localhost:8080/api/v1/
+  - url: http://localhost:8080/api/v1
     description: local, development server
 
 security: # extracted from #components/securitySchemes
@@ -53,6 +53,7 @@ paths:
       tags:
         - Index
       summary: Index entry for api status
+      description: Entry route for checking server status
       operationId: index
       responses:
         '200':
@@ -65,6 +66,7 @@ paths:
   /auth/login:
     post:
       summary: Logs in and returns JWT-auth-token
+      description: You log in to start interacting with the API resource and get data
       tags:
         - Auth
       operationId: authLogin
@@ -83,7 +85,8 @@ paths:
 
   /auth/register:
     post:
-      summary: Registers and returns JWT-auth-token
+      summary: Registers and returns user information
+      description: To register new account and get user information for use in other settings since login returns JWT token
       operationId: authRegister
       security: [ ]
       tags:
@@ -1818,27 +1821,27 @@ components:
   # Reusable Security Schemas
   #-------------------------------
   securitySchemes: # https://swagger.io/docs/specification/v3_0/authentication/
-    APIGatewayAuthorizer:
-      type: apiKey
-      name: Authorization
-      in: header
-      x-amazon-apigateway-authtype: oauth2
-      x-amazon-apigateway-authorizer:
-        type: token
-        authorizerUri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:account-id:function:function-name/invocations
-        authorizerCredentials: arn:aws:iam::account-id:role
-        identityValidationExpression: "^x-[a-z]+"
-        authorizerResultTtlInSeconds: 60
+#    APIGatewayAuthorizer:
+#      type: apiKey
+#      name: Authorization
+#      in: header
+#      x-amazon-apigateway-authtype: oauth2
+#      x-amazon-apigateway-authorizer:
+#        type: token
+#        authorizerUri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:account-id:function:function-name/invocations
+#        authorizerCredentials: arn:aws:iam::account-id:role
+#        identityValidationExpression: "^x-[a-z]+"
+#        authorizerResultTtlInSeconds: 60
 
     BearerAuth: # arbitrary name for the security scheme
       type: http
       scheme: bearer
       bearerFormat: JWT # optional, arbitrary value for documentation purposes
 
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
+#    ApiKeyAuth:
+#      type: apiKey
+#      in: header
+#      name: X-API-Key
 
 
   #-------------------------------
