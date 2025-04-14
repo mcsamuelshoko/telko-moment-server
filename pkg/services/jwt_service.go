@@ -28,7 +28,7 @@ type JWTService struct {
 	log                     *zerolog.Logger
 }
 
-func NewJWTService(logger *zerolog.Logger, cfg configs.JwtConfig) (*JWTService, error) {
+func NewJWTService(logger *zerolog.Logger, cfg configs.JwtConfig) (IJWTService, error) {
 	secret, err := hex.DecodeString(cfg.Secret)
 	if err != nil || len(secret) < 32 {
 		logger.Error().Err(err).Msg("Invalid JWT Secret")
