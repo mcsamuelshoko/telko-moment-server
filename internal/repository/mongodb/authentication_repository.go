@@ -36,13 +36,13 @@ func (a AuthenticationRepository) Create(ctx context.Context, auth *models.Authe
 	// Hash fields
 	//err := auth.HashFields(a.SearchKeyHashSvc,"")
 	//if err != nil {
-	//	a.Logger.Error().Err(err).Msg("error hashing authentication fields")
+	//	a.logger.Error().Err(err).Msg("error hashing authentication fields")
 	//	return nil, err
 	//}
 
 	// Encrypt sensitive fields before saving
 	//if err = auth.EncryptFields(a.EncryptionService); err != nil {
-	//	a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.Create")
+	//	a.logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.Create")
 	//	return nil, err
 
 	result, err := a.Collection.InsertOne(ctx, auth)
@@ -78,7 +78,7 @@ func (a AuthenticationRepository) GetList(ctx context.Context) (*[]models.Authen
 	//for _, authentication := range authList {
 	//	// Encrypt sensitive fields before saving
 	//	if err := authentication.DecryptFields(a.EncryptionService); err != nil {
-	//		a.Logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetList")
+	//		a.logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetList")
 	//		return nil, err
 	//	}
 	//	decryptedAuthList = append(decryptedAuthList, authentication)
@@ -102,7 +102,7 @@ func (a AuthenticationRepository) GetByUserID(ctx context.Context, userID string
 	}
 	// Decrypt sensitive fields before sharing
 	//if err := auth.DecryptFields(a.EncryptionService); err != nil {
-	//	a.Logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetByUserID")
+	//	a.logger.Error().Err(err).Msg("Failed to decrypt fields in AuthenticationRepository.GetByUserID")
 	//	return nil, err
 	//}
 	return &auth, nil
@@ -117,7 +117,7 @@ func (a AuthenticationRepository) UpdateByUserID(ctx context.Context, userID str
 	}
 	// Encrypt sensitive fields before saving
 	//if err := auth.EncryptFields(a.EncryptionService); err != nil {
-	//	a.Logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.UpdateByUserID")
+	//	a.logger.Error().Err(err).Msg("Failed to encrypt fields in AuthenticationRepository.UpdateByUserID")
 	//	return nil, err
 	//}
 
@@ -187,7 +187,7 @@ func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID s
 	// Encrypt Refresh Token before saving
 	//encRefreshToken, err := a.EncryptionService.Encrypt(refreshToken)
 	//if err != nil {
-	//	a.Logger.Error().Err(err).Msg("Failed to encrypt refresh token in AuthenticationRepository.SaveRefreshToken")
+	//	a.logger.Error().Err(err).Msg("Failed to encrypt refresh token in AuthenticationRepository.SaveRefreshToken")
 	//	return err
 	//}
 
