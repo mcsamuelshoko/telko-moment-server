@@ -5,7 +5,7 @@ import (
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 )
 
-type SettingsRepository interface {
+type ISettingsRepository interface {
 	Create(ctx context.Context, settings *models.Settings) (*models.Settings, error)
 	GetByID(ctx context.Context, id string) (*models.Settings, error)
 	GetByUserID(ctx context.Context, userId string) (*models.Settings, error)

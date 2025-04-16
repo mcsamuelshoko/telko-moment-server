@@ -16,7 +16,7 @@ type settingsRepository struct {
 	Logger     *zerolog.Logger
 }
 
-func NewSettingsRepository(log *zerolog.Logger, db *mongo.Database) repository.SettingsRepository {
+func NewSettingsRepository(log *zerolog.Logger, db *mongo.Database) repository.ISettingsRepository {
 	return &settingsRepository{
 		Collection: db.Collection("settings"),
 		Logger:     log,

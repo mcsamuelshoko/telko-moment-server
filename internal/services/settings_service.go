@@ -15,10 +15,10 @@ type ISettingsService interface {
 }
 
 type SettingsService struct {
-	repo repository.SettingsRepository
+	repo repository.ISettingsRepository
 }
 
-func NewSettingsService(repo repository.SettingsRepository) ISettingsService {
+func NewSettingsService(repo repository.ISettingsRepository) ISettingsService {
 	return &SettingsService{
 		repo: repo,
 	}
