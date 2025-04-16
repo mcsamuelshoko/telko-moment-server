@@ -8,14 +8,16 @@ import (
 )
 
 type JwtConfig struct {
-	Secret               string `env:"JWT_SECRET" envDefault:"secret"`
-	RefreshTokenSecret   string `env:"JWT_REFRESH_TOKEN_SECRET" envDefault:"secret"`
-	RefreshTokenDuration string `env:"JWT_REFRESH_TOKEN_DURATION" envDefault:"1h"`
+	Secret                     string `env:"JWT_SECRET" envDefault:"secret"`
+	TokenDuration              string `env:"JWT_TOKEN_DURATION" envDefault:"1h"`
+	RefreshTokenSecret         string `env:"JWT_REFRESH_TOKEN_SECRET" envDefault:"secret"`
+	RefreshTokenDuration       string `env:"JWT_REFRESH_TOKEN_DURATION" envDefault:"24h"`
+	RefreshTokenDaysMultiplier string `env:"JWT_REFRESH_TOKEN_DAYS_MULTIPLIER" envDefault:"24h"`
 }
 type Config struct {
 	MongoDB struct {
 		URI      string `env:"MONGODB_URI" envDefault:"mongodb://localhost:27017"`
-		Database string `env:"MONGODB_DB" envDefault:"telko_moment_db"`
+		Database string `env:"MONGODB_DB" envDefault:"tel_mont_db"`
 	} `json:"mongodb"`
 	Server struct {
 		Port string `env:"SERVER_PORT" envDefault:":8080"`
@@ -53,8 +55,10 @@ func LoadConfig() (*Config, error) {
 	config.Server.Port = os.Getenv("SERVER_PORT")
 
 	config.Jwt.Secret = os.Getenv("JWT_SECRET")
+	config.Jwt.TokenDuration = os.Getenv("JWT_TOKEN_DURATION")
 	config.Jwt.RefreshTokenSecret = os.Getenv("JWT_REFRESH_TOKEN_SECRET")
 	config.Jwt.RefreshTokenDuration = os.Getenv("JWT_REFRESH_TOKEN_DURATION")
+	config.Jwt.RefreshTokenDaysMultiplier = os.Getenv("JWT_REFRESH_TOKEN_DAYS_MULTIPLIER")
 
 	config.Encryption.AESKey = os.Getenv("ENC_AES_KEY")
 
