@@ -4,12 +4,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/mcsamuelshoko/telko-moment-server/api"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/controllers"
+	"github.com/mcsamuelshoko/telko-moment-server/internal/handlers/middleware"
 	"github.com/mcsamuelshoko/telko-moment-server/pkg/utils"
 	"github.com/rs/zerolog"
 )
 
 type RoutesHandler struct {
 	Logger             *zerolog.Logger
+	AuthMidleware      middleware.IAuthMiddleware
 	UserController     controllers.IUserController
 	SettingsController controllers.ISettingsController
 	AuthController     controllers.IAuthenticationController
@@ -18,6 +20,7 @@ type RoutesHandler struct {
 // NewRoutesHandler creates a new RoutesHandler instance.
 func NewRoutesHandler(
 	log *zerolog.Logger,
+	authMiddleware middleware.IAuthMiddleware,
 	userController controllers.IUserController,
 	settingsController controllers.ISettingsController,
 	authController controllers.IAuthenticationController,
@@ -25,6 +28,7 @@ func NewRoutesHandler(
 
 	return &RoutesHandler{
 		Logger:             log,
+		AuthMidleware:      authMiddleware,
 		UserController:     userController,
 		SettingsController: settingsController,
 		AuthController:     authController,
