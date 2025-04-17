@@ -9,6 +9,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Define Effect constants
+const (
+	EffectAllow = "allow"
+	EffectDeny  = "deny"
+)
+
 // Define Action constants
 const (
 	ActionRead   = "read"
@@ -60,6 +66,9 @@ func NewCasbinAuthorizationService(log *zerolog.Logger, modelFilePath string, ad
 		return nil, fmt.Errorf("failed to create enforcer: %v", err)
 	}
 
+	// Load Policies
+	enforcer.EnableAutoSave(true)
+
 	return &casbinService{
 		logger:   log,
 		enforcer: enforcer,
@@ -94,21 +103,21 @@ func (s *casbinService) LoadPolicies() error {
 	//if err != nil {
 	//	return err
 	//}
-
+	s.logger.Debug().Msg("starting policy additions")
 	// User based access
 	const userBasedSubrule = "r.sub.ID.Hex() == r.obj.ID.Hex()"
 	// :::: Users Collection
-	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionRead)
+	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionRead, EffectAllow)
 	if err != nil {
 		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionRead)
 		return err
 	}
-	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionUpdate)
+	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionUpdate, EffectAllow)
 	if err != nil {
 		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionUpdate)
 		return err
 	}
-	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionDelete)
+	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionDelete, EffectAllow)
 	if err != nil {
 		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionDelete)
 		return err
@@ -117,13 +126,13 @@ func (s *casbinService) LoadPolicies() error {
 	// Owner-based access
 	const ownerBasedSubrule = "r.sub.ID.Hex() == r.obj.UserId.Hex()"
 	// :::: Settings Collection
-	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionRead)
+	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionRead, EffectAllow)
 	if err != nil {
 		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionRead)
 		return err
 	}
 
-	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionUpdate)
+	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionUpdate, EffectAllow)
 	if err != nil {
 		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionUpdate)
 		return err
@@ -132,7 +141,7 @@ func (s *casbinService) LoadPolicies() error {
 	// Admin role access
 	const adminBasedSubrule = "r.sub.ID in r.obj.AdminIDs"
 	// :::: ChatGroups Collection
-	_, err = s.enforcer.AddPolicy(adminBasedSubrule, ResourceChatGroups, ActionAdmin)
+	_, err = s.enforcer.AddPolicy(adminBasedSubrule, ResourceChatGroups, ActionAdmin, EffectAllow)
 	if err != nil {
 		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceChatGroups + "-" + ActionAdmin)
 		return err
