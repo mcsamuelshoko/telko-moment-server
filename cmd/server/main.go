@@ -133,6 +133,11 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize AuthorizationService")
 	}
+	// Load policies
+	err = authznSvc.LoadPolicies()
+	if err != nil {
+		log.Fatal().Err(err).Interface("main", "server").Msg("failed to load authorization policies")
+	}
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authznSvc, userRepo, settingsRepo)
