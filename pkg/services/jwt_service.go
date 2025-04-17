@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/mcsamuelshoko/telko-moment-server/configs"
 	"github.com/rs/zerolog"
 	"strconv"
@@ -21,6 +22,7 @@ type IJWTService interface {
 }
 
 type JWTService struct {
+	issuer                  string
 	jwtSecret               []byte // In production, fetch this from a secure KMS
 	jwtTokenDuration        time.Duration
 	jwtRefreshTokenSecret   []byte
@@ -60,6 +62,7 @@ func NewJWTService(logger *zerolog.Logger, cfg configs.JwtConfig) (IJWTService, 
 	}
 
 	return &JWTService{
+		issuer:                  cfg.Issuer,
 		jwtSecret:               secret,
 		jwtRefreshTokenSecret:   refreshSecret,
 		jwtTokenDuration:        duration,
@@ -72,6 +75,10 @@ func (j *JWTService) GenerateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"exp": time.Now().Add(j.jwtTokenDuration).Unix(), // Access token expiration
+		"nbf": time.Now().Unix(),                         // Not Before, is the time it should be allowed use after it hs passed
+		"iat": time.Now().Unix(),                         // issuedAt time
+		"iss": j.issuer,                                  // Token Issuer
+		"jti": uuid.New().String(),                       // Nonce , can be used token ID
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -82,6 +89,10 @@ func (j *JWTService) GenerateRefreshToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
 		"exp": time.Now().Add(j.jwtRefreshTokenDuration).Unix(), // Refresh token expiration
+		"nbf": time.Now().Unix(),                                // Not Before, is the time it should be allowed use after it hs passed
+		"iat": time.Now().Unix(),                                // issuedAt time
+		"iss": j.issuer,                                         // Token Issuer
+		"jti": uuid.New().String(),                              // JWT token ID
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
