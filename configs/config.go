@@ -8,6 +8,7 @@ import (
 )
 
 type JwtConfig struct {
+	Issuer                     string `env:"JWT_ISSUER" envDefault:"telko_moment"`
 	Secret                     string `env:"JWT_SECRET" envDefault:"secret"`
 	TokenDuration              string `env:"JWT_TOKEN_DURATION" envDefault:"1h"`
 	RefreshTokenSecret         string `env:"JWT_REFRESH_TOKEN_SECRET" envDefault:"secret"`
@@ -54,6 +55,7 @@ func LoadConfig() (*Config, error) {
 
 	config.Server.Port = os.Getenv("SERVER_PORT")
 
+	config.Jwt.Issuer = os.Getenv("JWT_ISSUER")
 	config.Jwt.Secret = os.Getenv("JWT_SECRET")
 	config.Jwt.TokenDuration = os.Getenv("JWT_TOKEN_DURATION")
 	config.Jwt.RefreshTokenSecret = os.Getenv("JWT_REFRESH_TOKEN_SECRET")
