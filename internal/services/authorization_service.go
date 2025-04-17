@@ -15,12 +15,25 @@ const (
 	ActionCreate = "create"
 	ActionUpdate = "update"
 	ActionDelete = "delete"
-	ActionPost   = "post" // e.g., post message, post reply
-	ActionJoin   = "join"
-	ActionLeave  = "leave"
-	ActionBan    = "ban"
-	ActionMute   = "mute"
+
+	ActionPost  = "post" // e.g., post message, post reply
+	ActionJoin  = "join"
+	ActionLeave = "leave"
+	ActionBan   = "ban"
+	ActionMute  = "mute"
+
+	ActionModerator = "moderator"
+	ActionAdmin     = "admin"
+	ActionOwner     = "owner"
 	// ... add more specific actions as needed
+)
+
+// Define Collection/Resource constants
+const (
+	ResourceUsers      = "users"
+	ResourceSettings   = "settings"
+	ResourceMessages   = "messages"
+	ResourceChatGroups = "chat_groups"
 )
 
 // IAuthorizationService checks if a user can perform an action on a resource.
@@ -29,9 +42,17 @@ type IAuthorizationService interface {
 	// or any struct containing the necessary attributes for the check.
 	//Can(ctx context.Context, userId string, action string, resource interface{}) (bool, error)
 	Can(ctx context.Context, user *models.User, resource interface{}, action string) (bool, error)
+	// LoadPolicies adds policies to the adapter. it adds the default policies defined by code when called at runtime
+	LoadPolicies() error
 }
 
-func NewAuthorizationService(log *zerolog.Logger, modelFilePath string, adapter persist.BatchAdapter) (IAuthorizationService, error) {
+// casbinService handles authorization using Casbin
+type casbinService struct {
+	logger   *zerolog.Logger
+	enforcer *casbin.Enforcer
+}
+
+func NewCasbinAuthorizationService(log *zerolog.Logger, modelFilePath string, adapter persist.BatchAdapter) (IAuthorizationService, error) {
 
 	// Create enforcer
 	enforcer, err := casbin.NewEnforcer(modelFilePath, adapter)
@@ -43,12 +64,6 @@ func NewAuthorizationService(log *zerolog.Logger, modelFilePath string, adapter 
 		logger:   log,
 		enforcer: enforcer,
 	}, nil
-}
-
-// casbinService handles authorization using Casbin
-type casbinService struct {
-	logger   *zerolog.Logger
-	enforcer *casbin.Enforcer
 }
 
 // User represents a user with attributes
@@ -71,30 +86,69 @@ type casbinService struct {
 
 // LoadPolicies loads ABAC policies
 func (s *casbinService) LoadPolicies() error {
+
+	var err error
+	const failedToAddErrMsg = "failed to add policy ::"
 	// Department-based access for documents
-	_, err := s.enforcer.AddPolicy("r.sub.Department == 'Engineering'", "engineering_docs", "read")
+	//_, err := s.enforcer.AddPolicy("r.sub.Department == 'Engineering'", "engineering_docs", "read")
+	//if err != nil {
+	//	return err
+	//}
+
+	// User based access
+	const userBasedSubrule = "r.sub.ID.Hex() == r.obj.ID.Hex()"
+	// :::: Users Collection
+	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionRead)
 	if err != nil {
+		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionRead)
+		return err
+	}
+	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionUpdate)
+	if err != nil {
+		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionUpdate)
+		return err
+	}
+	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionDelete)
+	if err != nil {
+		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionDelete)
 		return err
 	}
 
 	// Owner-based access
-	_, err = s.enforcer.AddPolicy("r.sub.ID.Hex() == r.obj.UserId.Hex()", "any_resource", "edit")
+	const ownerBasedSubrule = "r.sub.ID.Hex() == r.obj.UserId.Hex()"
+	// :::: Settings Collection
+	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionRead)
 	if err != nil {
+		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionRead)
+		return err
+	}
+
+	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionUpdate)
+	if err != nil {
+		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionUpdate)
 		return err
 	}
 
 	// Admin role access
-	_, err = s.enforcer.AddPolicy("r.sub.Role == 'admin'", "any_resource", "admin")
+	const adminBasedSubrule = "r.sub.ID in r.obj.AdminIDs"
+	// :::: ChatGroups Collection
+	_, err = s.enforcer.AddPolicy(adminBasedSubrule, ResourceChatGroups, ActionAdmin)
 	if err != nil {
+		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceChatGroups + "-" + ActionAdmin)
 		return err
 	}
 
+	//_, err = s.enforcer.AddPolicy("r.sub.Role == 'admin'", "any_resource", "admin")
+	//if err != nil {
+	//	return err
+	//}
+
 	// Time-based access
-	timeRule := "time.Since(r.sub.JoinedAt).Hours() > 24 * 30" // User joined more than a month ago
-	_, err = s.enforcer.AddPolicy(timeRule, "premium_content", "access")
-	if err != nil {
-		return err
-	}
+	//timeRule := "time.Since(r.sub.JoinedAt).Hours() > 24 * 30" // User joined more than a month ago
+	//_, err = s.enforcer.AddPolicy(timeRule, "premium_content", "access")
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
