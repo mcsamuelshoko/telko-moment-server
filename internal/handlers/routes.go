@@ -10,28 +10,31 @@ import (
 )
 
 type RoutesHandler struct {
-	Logger             *zerolog.Logger
-	AuthMidleware      middleware.IAuthMiddleware
-	UserController     controllers.IUserController
-	SettingsController controllers.ISettingsController
-	AuthController     controllers.IAuthenticationController
+	logger             *zerolog.Logger
+	authMiddleware     middleware.IAuthMiddleware
+	authCtxMiddleware  *middleware.AuthContextMiddleware
+	userController     controllers.IUserController
+	settingsController controllers.ISettingsController
+	authController     controllers.IAuthenticationController
 }
 
 // NewRoutesHandler creates a new RoutesHandler instance.
 func NewRoutesHandler(
 	log *zerolog.Logger,
 	authMiddleware middleware.IAuthMiddleware,
+	authCtxMiddleware *middleware.AuthContextMiddleware,
 	userController controllers.IUserController,
 	settingsController controllers.ISettingsController,
 	authController controllers.IAuthenticationController,
 ) *RoutesHandler {
 
 	return &RoutesHandler{
-		Logger:             log,
-		AuthMidleware:      authMiddleware,
-		UserController:     userController,
-		SettingsController: settingsController,
-		AuthController:     authController,
+		logger:             log,
+		authMiddleware:     authMiddleware,
+		userController:     userController,
+		settingsController: settingsController,
+		authController:     authController,
+		authCtxMiddleware:  authCtxMiddleware,
 	}
 }
 
@@ -47,7 +50,7 @@ func (r RoutesHandler) SetupRoutes(app *fiber.App) {
 	// ENTRY
 	entry := app.Group("/")
 	entry.Get("/", func(c *fiber.Ctx) error {
-		handler.Logger.Debug().Msg("[route]:GET:/")
+		r.logger.Debug().Msg("[route]:GET:/")
 		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(fiber.Map{"name": "Telko Moment API", "version": "0.1.0-alpha", "relativeLink": "/api/v1/"}, "Hello, World!"))
 	})
 
@@ -61,29 +64,33 @@ func (r RoutesHandler) SetupRoutes(app *fiber.App) {
 	// ##################################################################### //
 	// ENTRY
 	v1.Get("/", func(c *fiber.Ctx) error {
-		handler.Logger.Debug().Msg("[route]:GET:/")
+		r.logger.Debug().Msg("[route]:GET:/")
 		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(nil, "Ready to serve!"))
 	})
 
 	// AUTH
 	auth := v1.Group("/auth")
 	auth.Post("/login", func(ctx *fiber.Ctx) error {
-		return r.AuthController.Login(ctx)
+		return r.authController.Login(ctx)
 	})
 	auth.Post("/register", func(ctx *fiber.Ctx) error {
-		return r.AuthController.Register(ctx)
+		return r.authController.Register(ctx)
 	})
 	auth.Post("/update-token", func(ctx *fiber.Ctx) error {
-		return r.AuthController.UpdateRefreshToken(ctx)
+		return r.authController.UpdateRefreshToken(ctx)
 	})
 	auth.Post("/logout", func(ctx *fiber.Ctx) error {
-		return r.AuthController.CancelRefreshToken(ctx)
+		return r.authController.CancelRefreshToken(ctx)
 	})
 
 	// USERS
 	users := v1.Group("/users")
+	// use middleware that apply
+	users.Use(r.authMiddleware.Authenticate())
+	users.Use(r.authCtxMiddleware.AddUserContext())
 	users.Get("/", wrapper.GetAllUsers)
 	users.Get("/:id", wrapper.GetUserById)
+
 	users.Post("/", wrapper.CreateUser)
 	users.Put("/:id", wrapper.UpdateUser)
 	users.Delete("/:id", wrapper.DeleteUser)
@@ -213,29 +220,29 @@ func (r RoutesHandler) UpdateMessage(c *fiber.Ctx, messageId string) error {
 }
 
 func (r RoutesHandler) GetUserSettings(c *fiber.Ctx, userId string) error {
-	return r.SettingsController.GetUserSettings(c, userId)
+	return r.settingsController.GetUserSettings(c, userId)
 }
 
 func (r RoutesHandler) UpdateUserSettings(c *fiber.Ctx, userId string) error {
-	return r.SettingsController.UpdateUserSettings(c, userId)
+	return r.settingsController.UpdateUserSettings(c, userId)
 }
 
 func (r RoutesHandler) GetAllUsers(c *fiber.Ctx) error {
-	return r.UserController.GetAllUsers(c)
+	return r.userController.GetAllUsers(c)
 }
 
 func (r RoutesHandler) CreateUser(c *fiber.Ctx) error {
-	return r.UserController.CreateUser(c)
+	return r.userController.CreateUser(c)
 }
 
 func (r RoutesHandler) DeleteUser(c *fiber.Ctx, userId string) error {
-	return r.UserController.DeleteUser(c, userId)
+	return r.userController.DeleteUser(c, userId)
 }
 
 func (r RoutesHandler) GetUserById(c *fiber.Ctx, userId string) error {
-	return r.UserController.GetUserById(c, userId)
+	return r.userController.GetUserById(c, userId)
 }
 
 func (r RoutesHandler) UpdateUser(c *fiber.Ctx, userId string) error {
-	return r.UserController.UpdateUser(c, userId)
+	return r.userController.UpdateUser(c, userId)
 }
