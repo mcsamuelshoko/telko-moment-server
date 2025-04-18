@@ -20,10 +20,14 @@
 - REST APIs [<https://www.ibm.com/think/topics/rest-apis>]
 - Api Management [<https://www.ibm.com/think/topics/api-management>]
 
+- JWT
+  - Token Claims [<https://datatracker.ietf.org/doc/html/rfc7519#section-4.2>]
 
 - Casbin for ABAC : [<https://casbin.org/>]
   - Golang Repo: [<https://github.com/casbin/casbin>]
   - White paper: [<https://arxiv.org/abs/1903.09756>]
+  - ABAC : [<https://casbin.org/docs/abac>]
+    - Mongodb Adapter: [<https://github.com/casbin/mongodb-adapter/>]
 ---
 
 
