@@ -69,39 +69,39 @@ func main() {
 	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	// Initialize MongoDB connection with timeout
-	log.Info().Str("app", "MAIN").Msg("initializing MongoDB connection")
+	log.Info().Interface("main", "server").Msg("initializing MongoDB connection")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoDB.URI))
 	if err != nil {
-		log.Fatal().Err(err).Str("app", "MAIN").Str("uri", cfg.MongoDB.URI).Msg("Failed to connect to MongoDB")
+		log.Fatal().Err(err).Interface("main", "server").Str("uri", cfg.MongoDB.URI).Msg("Failed to connect to MongoDB")
 	}
 	defer func() {
 		if err := client.Disconnect(context.Background()); err != nil {
-			log.Error().Err(err).Str("app", "MAIN").Msg("Failed to disconnect from MongoDB") // Error, not Fatal
+			log.Error().Err(err).Interface("main", "server").Msg("Failed to disconnect from MongoDB") // Error, not Fatal
 		}
 	}()
-	log.Info().Str("app", "MAIN").Msg("Success: Established MongoDB connection")
+	log.Info().Interface("main", "server").Msg("Success: Established MongoDB connection")
 
 	db := client.Database(cfg.MongoDB.Database)
 
 	// Create initial indexes
 	err = internalmongodb.CreateInitialIndexes(db, &log)
 	if err != nil {
-		log.Fatal().Err(err).Str("app", "MAIN").Msg("Failed to create initial indexes")
+		log.Fatal().Err(err).Interface("main", "server").Msg("Failed to create initial indexes")
 		return
 	}
 
 	// Initialize dependencies
 	encryptionSvc, err := pkgservices.NewAESEncryptionService(cfg.Encryption.AESKey, &log)
 	if err != nil {
-		log.Fatal().Err(err).Str("app", "MAIN").Msg("Failed to create EncryptionService")
+		log.Fatal().Err(err).Interface("main", "server").Msg("Failed to create EncryptionService")
 		return
 	}
 
 	jwtSvc, err := pkgservices.NewJWTService(&log, cfg.Jwt)
 	if err != nil {
-		log.Fatal().Err(err).Str("app", "MAIN").Msg("Failed to create JWTService")
+		log.Fatal().Err(err).Interface("main", "server").Msg("Failed to create JWTService")
 		return
 	}
 
@@ -126,12 +126,12 @@ func main() {
 	// Initialize MongoDB adapter for auth
 	authznAdapter, err := mongodbadapter.NewAdapter(cfg.MongoDB.URI + "/" + cfg.MongoDB.Database) // authorization collection is "casbin_rules"
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to initialize MongoDB adapter")
+		log.Fatal().Err(err).Interface("main", "server").Msg("failed to initialize MongoDB adapter")
 	}
 	authznModelFilePath := "configs/casbin/abac_model.conf"
-	authznSvc, err := services.NewAuthorizationService(&log, authznModelFilePath, authznAdapter)
+	authznSvc, err := services.NewCasbinAuthorizationService(&log, authznModelFilePath, authznAdapter)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to initialize AuthorizationService")
+		log.Fatal().Err(err).Interface("main", "server").Msg("failed to initialize AuthorizationService")
 	}
 	// Load policies
 	err = authznSvc.LoadPolicies()
@@ -140,13 +140,14 @@ func main() {
 	}
 
 	// Initialize middleware
-	authMiddleware := middleware.NewAuthMiddleware(authznSvc, userRepo, settingsRepo)
+	authctMdw := middleware.NewJWTAuthMiddleware(&log, jwtSvc)
+	authCtxMdw := middleware.NewAuthContextMiddleware(&log, userRepo)
 
 	// Setup Fiber app
 	app := fiber.New()
 
 	// Setup routes
-	routesHandler := handlers.NewRoutesHandler(&log, authMiddleware, userCtrl, settingsCtrl, authctCtrl)
+	routesHandler := handlers.NewRoutesHandler(&log, authctMdw, authCtxMdw, userCtrl, settingsCtrl, authctCtrl)
 	routesHandler.SetupRoutes(app) // layered
 
 	// handle swagger routes
@@ -156,16 +157,16 @@ func main() {
 	log.Info().Str("port", cfg.Server.Port).Msg("Starting server")
 	func() {
 		if err := app.Listen(`:` + cfg.Server.Port); err != nil {
-			log.Fatal().Err(err).Msg("Failed to listen")
+			log.Fatal().Err(err).Interface("main", "server").Msg("Failed to listen")
 		}
 	}()
 
 	// Wait for interrupt signal (e.g., Ctrl+C)
 	err = app.ShutdownWithContext(context.Background())
 	if err != nil {
-		log.Fatal().Err(err).Str("app", "MAIN").Msg("Failed to shutdown")
+		log.Fatal().Err(err).Interface("main", "server").Msg("Failed to shutdown")
 		return
 	}
-	log.Info().Str("app", "MAIN").Msg("Server stopped")
+	log.Info().Interface("main", "server").Msg("Server stopped")
 
 }
