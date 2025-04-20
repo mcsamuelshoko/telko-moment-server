@@ -46,7 +46,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Str("app", "MAIN").Msg("failed to load config file")
 	}
-	log.Info().Str("app", "MAIN").Msg("Success: Loaded configuration")
+	log.Info().Str("main", "server").Msg("Success: Loaded configuration")
 	//b, err := json.Marshal(cfg)
 	//if err != nil {
 	//	log.Fatal().Err(err).Str("app", "MAIN").Msg("failed to marshal config file")
