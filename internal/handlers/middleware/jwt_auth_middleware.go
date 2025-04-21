@@ -74,7 +74,7 @@ func (jam *JWTAuthMiddleware) Authenticate() fiber.Handler {
 
 			// 6. Add the extracted userID string to the request context
 			//ctx := context.WithValue(c.Context(), UserIDStrContextKey, userIDStr)
-			c.Locals("userId", userIDStr) // Store the token in the context
+			c.Locals(UserIDStrContextKey, userIDStr) // Store the token in the context
 
 			// 7. Call the next handler in the chain with the new context
 			//next.ServeHTTP(w, r.WithContext(ctx))
