@@ -23,22 +23,25 @@ type ISettingsController interface {
 }
 
 type SettingsController struct {
+	iName           string
 	settingsService services.ISettingsService
 	logger          *zerolog.Logger
 }
 
 func NewSettingsController(log *zerolog.Logger, settingsSvc services.ISettingsService) ISettingsController {
 	return &SettingsController{
+		iName:           "SettingsController",
 		settingsService: settingsSvc,
 		logger:          log,
 	}
 }
 
 func (s *SettingsController) CreateUserSettings(c *fiber.Ctx, userId string) error {
+	const kName = "CreateUserSettings"
 	// Convert userId to primitive.ObjectID
 	objectID, err := utils.StringToObjectID(userId)
 	if err != nil {
-		s.logger.Error().Err(err).Str("userId", userId).Msg("error parsing user id")
+		s.logger.Error().Interface(kName, s.iName).Err(err).Str("userId", userId).Msg("error parsing user id")
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Failed to create userId for settings"))
 	}
 
@@ -49,7 +52,7 @@ func (s *SettingsController) CreateUserSettings(c *fiber.Ctx, userId string) err
 	// create to persist user settings in db
 	_, err = s.settingsService.Create(c.Context(), settings)
 	if err != nil {
-		s.logger.Error().Err(err).Msg("Failed to create user settings")
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to create user settings")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to create user settings"))
 	}
 	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(settings, "Created user settings"))

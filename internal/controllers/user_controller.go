@@ -32,6 +32,7 @@ type IUserController interface {
 }
 
 type UserController struct {
+	iName           string
 	log             *zerolog.Logger
 	userService     services.IUserService
 	settingsService services.ISettingsService
@@ -41,6 +42,7 @@ type UserController struct {
 
 func NewUserController(log *zerolog.Logger, service services.IUserService, settingsSvc services.ISettingsService) IUserController {
 	return &UserController{
+		iName:           "UserController",
 		userService:     service,
 		log:             log,
 		settingsService: settingsSvc,
@@ -48,16 +50,17 @@ func NewUserController(log *zerolog.Logger, service services.IUserService, setti
 }
 
 func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
+	const kName = "CreateUser"
 	user := new(models.User)
 	if err := c.BodyParser(user); err != nil {
-		ctrl.log.Error().Err(err).Msg("Failed to parse user body")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg("Failed to parse user body")
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
 
 	// Hash user password
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
-		ctrl.log.Error().Err(err).Msg("Failed to hash password")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg("Failed to hash password")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to create user"))
 	} else {
 		user.Password = hashedPassword
@@ -67,7 +70,7 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 	createdUser, err := ctrl.userService.CreateUser(c.Context(), user)
 	if err != nil {
 		msg := "Failed to create user"
-		ctrl.log.Error().Err(err).Msg(msg)
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg(msg)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse(msg))
 	}
 
@@ -77,12 +80,12 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 
 	_, err = ctrl.settingsService.Create(c.Context(), settings)
 	if err != nil {
-		ctrl.log.Error().Err(err).Msg("Failed to create user settings")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg("Failed to create user settings")
 		// Handle settings creation error, perhaps delete the user that was created.
 		// Rollback user creation if settings creation fails.
 		deleteErr := ctrl.userService.DeleteUser(c.Context(), createdUser.ID.String())
 		if deleteErr != nil {
-			ctrl.log.Error().Err(deleteErr).Msg("Failed to delete user after settings creation error")
+			ctrl.log.Error().Interface(kName, ctrl.iName).Err(deleteErr).Msg("Failed to delete user after settings creation error")
 		}
 
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to create user settings"))
@@ -92,10 +95,12 @@ func (ctrl *UserController) CreateUser(c *fiber.Ctx) error {
 }
 
 func (ctrl *UserController) GetAllUsers(c *fiber.Ctx) error {
+	const kName = "GetAllUsers"
+
 	//TODO: make sure the page and the limit come from the request and not solid values
 	users, err := ctrl.userService.ListUsers(c.Context(), 0, 50)
 	if err != nil {
-		ctrl.log.Error().Err(err).Msg("Failed to get list of users")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg("Failed to get list of users")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to get list of user"))
 	}
 	// sanitizeUsers
@@ -107,24 +112,27 @@ func (ctrl *UserController) GetAllUsers(c *fiber.Ctx) error {
 }
 
 func (ctrl *UserController) GetUserById(c *fiber.Ctx, userId string) error {
+	const kName = "GetUserById"
+
 	user, err := ctrl.userService.GetUserByID(c.Context(), userId)
 	if err != nil {
-		ctrl.log.Error().Err(err).Str("userID", userId).Msg("Failed to get user")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Str("userID", userId).Msg("Failed to get user")
 		return c.Status(fiber.StatusNotFound).JSON(utils.ErrorResponse("Failed to get user"))
 	}
 	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(user.Sanitize(), "User found")) // Return the user object directly
 }
 
 func (ctrl *UserController) UpdateUser(c *fiber.Ctx, userId string) error {
+	const kName = "UpdateUser"
 	user := new(models.User)
 	if err := c.BodyParser(user); err != nil {
-		ctrl.log.Error().Err(err).Msg("Failed to parse user body")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg("Failed to parse user body")
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
 
 	updatedUser, err := ctrl.userService.UpdateUser(c.Context(), user)
 	if err != nil {
-		ctrl.log.Error().Err(err).Str("userID", userId).Msg("Failed to update user")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Str("userID", userId).Msg("Failed to update user")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to update user"))
 	}
 
@@ -132,9 +140,10 @@ func (ctrl *UserController) UpdateUser(c *fiber.Ctx, userId string) error {
 }
 
 func (ctrl *UserController) DeleteUser(c *fiber.Ctx, userId string) error {
+	const kName = "DeleteUser"
 	err := ctrl.userService.DeleteUser(c.Context(), userId)
 	if err != nil {
-		ctrl.log.Error().Err(err).Str("userID", userId).Msg("Failed to delete user")
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Str("userID", userId).Msg("Failed to delete user")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to delete user"))
 	}
 
