@@ -4,6 +4,7 @@ import (
 	"context"
 	mongodbadapter "github.com/casbin/mongodb-adapter/v3"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/mcsamuelshoko/telko-moment-server/configs"
 	"github.com/mcsamuelshoko/telko-moment-server/docs"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/controllers"
@@ -139,6 +140,18 @@ func main() {
 
 	// Setup Fiber app
 	app := fiber.New()
+
+	// :::: add middleware
+	// Logging remote IP and Port
+	app.Use(logger.New(logger.Config{
+		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n\n",
+	}))
+	// Idempotency
+	//app.Use(idempotency.New())	//TODO use later, for now disable any interfering on requests middleware for testing & development speed
+
+	// ::: health & Metrics
+	//app.Use(healthcheck.New())	// Provide a minimal config
+	//app.Get("/metrics", monitor.New())	// Initialize default config (Assign the middleware to /metrics)
 
 	// Setup routes
 	routesHandler := handlers.NewRoutesHandler(&log, authctMdw, authCtxMdw, userCtrl, settingsCtrl, authctCtrl)
