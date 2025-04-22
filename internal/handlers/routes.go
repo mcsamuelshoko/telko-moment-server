@@ -10,6 +10,7 @@ import (
 )
 
 type RoutesHandler struct {
+	iName              string
 	logger             *zerolog.Logger
 	authMiddleware     middleware.IAuthMiddleware
 	authCtxMiddleware  *middleware.AuthContextMiddleware
@@ -29,6 +30,7 @@ func NewRoutesHandler(
 ) *RoutesHandler {
 
 	return &RoutesHandler{
+		iName:              "RoutesHandler",
 		logger:             log,
 		authMiddleware:     authMiddleware,
 		userController:     userController,
@@ -39,6 +41,7 @@ func NewRoutesHandler(
 }
 
 func (r RoutesHandler) SetupRoutes(app *fiber.App) {
+	const kName = "SetupRoutes"
 
 	//pointing to handler out of laziness to refactor
 	handler := &r
@@ -47,58 +50,62 @@ func (r RoutesHandler) SetupRoutes(app *fiber.App) {
 	wrapper := api.ServerInterfaceWrapper{Handler: handler}
 	//si := api.ServerInterface(handler)
 
-	// ENTRY
+	// ::: ENTRY
 	entry := app.Group("/")
 	entry.Get("/", func(c *fiber.Ctx) error {
 		r.logger.Debug().Msg("[route]:GET:/")
-		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(fiber.Map{"name": "Telko Moment API", "version": "0.1.0-alpha", "relativeLink": "/api/v1/"}, "Hello, World!"))
+		return c.Status(fiber.StatusOK).
+			JSON(utils.SuccessResponse(
+				fiber.Map{
+					"name":         "Telko Moment API",
+					"version":      "0.1.0-alpha",
+					"relativeLink": "/api/v1/"},
+				"Hello, World!"))
 	})
 
-	// API ROUTING SETUP
-	_api := app.Group("/api")
-	v1 := _api.Group("/v1")
+	// ::: API ROUTING SETUP
+	apiRoute := app.Group("/api")
+	v1 := apiRoute.Group("/v1")
 
 	//// Register the routes
 	//api.RegisterHandlers(v1, si)
 
-	// ##################################################################### //
-	// ENTRY
-	v1.Get("/", func(c *fiber.Ctx) error {
-		r.logger.Debug().Msg("[route]:GET:/")
-		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(nil, "Ready to serve!"))
-	})
+	// ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: //
 
-	// AUTH
+	// ::: ENTRY
+	v1.Get("/", wrapper.Index)
+
+	// ::: AUTH
 	auth := v1.Group("/auth")
-	auth.Post("/login", func(ctx *fiber.Ctx) error {
-		return r.authController.Login(ctx)
-	})
-	auth.Post("/register", func(ctx *fiber.Ctx) error {
-		return r.authController.Register(ctx)
-	})
-	auth.Post("/update-token", func(ctx *fiber.Ctx) error {
+	auth.Post("/login", wrapper.AuthLogin)
+	auth.Post("/register", wrapper.AuthRegister)
+	auth.Post("/refresh-token", func(ctx *fiber.Ctx) error {
 		return r.authController.UpdateRefreshToken(ctx)
 	})
 	auth.Post("/logout", func(ctx *fiber.Ctx) error {
 		return r.authController.CancelRefreshToken(ctx)
 	})
 
-	// USERS
+	// ::: USERS
 	users := v1.Group("/users")
+
 	// use middleware that apply
-	users.Use(r.authMiddleware.Authenticate())
-	users.Use(r.authCtxMiddleware.AddUserContext())
+	users.Use(r.authMiddleware.Authenticate()).Use(r.authCtxMiddleware.AddUserContext())
+
+	// add routes that use the middleware
 	users.Get("/", wrapper.GetAllUsers)
-	users.Get("/:id", wrapper.GetUserById)
+	users.Get("/:userId", wrapper.GetUserById)
 
 	users.Post("/", wrapper.CreateUser)
-	users.Put("/:id", wrapper.UpdateUser)
-	users.Delete("/:id", wrapper.DeleteUser)
+	users.Put("/:userId", wrapper.UpdateUser)
+	users.Delete("/:userId", wrapper.DeleteUser)
 
-	// SETTINGS
+	// ::: SETTINGS
 	settings := v1.Group("/settings")
-	settings.Get("/:id", wrapper.GetUserSettings)
-	settings.Put("/:id", wrapper.UpdateUserSettings)
+	// use middleware that apply
+	settings.Use(r.authMiddleware.Authenticate()).Use(r.authCtxMiddleware.AddUserContext())
+	settings.Get("/:userId", wrapper.GetUserSettings)
+	settings.Put("/:userId", wrapper.UpdateUserSettings)
 
 	// ... Setup routes for other resources (chats, messages, etc.)
 
@@ -219,6 +226,30 @@ func (r RoutesHandler) UpdateMessage(c *fiber.Ctx, messageId string) error {
 	panic("implement me")
 }
 
+// ::::::::::::::::::::::::::::::  ROUTES ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+// :::: ENTRY -or- INDEX
+
+func (r RoutesHandler) Index(c *fiber.Ctx) error {
+	const kName = "Index"
+
+	r.logger.Debug().Interface(kName, r.iName).Msg("[route]:GET:/api/v1/")
+	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(nil, "Ready to serve!"))
+
+}
+
+// :::: AUTH
+
+func (r RoutesHandler) AuthLogin(c *fiber.Ctx) error {
+	return r.authController.Login(c)
+}
+
+func (r RoutesHandler) AuthRegister(c *fiber.Ctx) error {
+	return r.authController.Register(c)
+}
+
+// :::: SETTINGS
+
 func (r RoutesHandler) GetUserSettings(c *fiber.Ctx, userId string) error {
 	return r.settingsController.GetUserSettings(c, userId)
 }
@@ -226,6 +257,8 @@ func (r RoutesHandler) GetUserSettings(c *fiber.Ctx, userId string) error {
 func (r RoutesHandler) UpdateUserSettings(c *fiber.Ctx, userId string) error {
 	return r.settingsController.UpdateUserSettings(c, userId)
 }
+
+// :::: USERS
 
 func (r RoutesHandler) GetAllUsers(c *fiber.Ctx) error {
 	return r.userController.GetAllUsers(c)
