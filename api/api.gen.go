@@ -8,6 +8,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"mime/multipart"
 	"net/url"
@@ -20,6 +21,66 @@ import (
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+const (
+	BearerAuthScopes = "BearerAuth.Scopes"
+)
+
+// AuthLogin defines model for AuthLogin.
+type AuthLogin struct {
+	// AccessToken JWT access token used in authentication
+	AccessToken *string `json:"accessToken,omitempty"`
+
+	// RefreshToken JWT-Refresh-Token used for expiration and renewal/extending of expiration time
+	RefreshToken *string `json:"refreshToken,omitempty"`
+}
+
+// AuthLoginEmailRequest defines model for AuthLoginEmailRequest.
+type AuthLoginEmailRequest struct {
+	// Email The email address of the user.
+	Email *openapi_types.Email `json:"email,omitempty"`
+
+	// Password The password of the user.
+	Password *string `json:"password,omitempty"`
+}
+
+// AuthLoginPhoneNumberRequest defines model for AuthLoginPhoneNumberRequest.
+type AuthLoginPhoneNumberRequest struct {
+	// Password The password of the user.
+	Password *string `json:"password,omitempty"`
+
+	// PhoneNumber The phone number of the user.
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
+}
+
+// AuthLoginResponse defines model for AuthLoginResponse.
+type AuthLoginResponse struct {
+	Data *AuthLogin `json:"data,omitempty"`
+
+	// Message description of process outcome
+	Message *string `json:"message,omitempty"`
+
+	// Success is the response a success response
+	Success *bool `json:"success,omitempty"`
+}
+
+// AuthRegisterEmailRequest defines model for AuthRegisterEmailRequest.
+type AuthRegisterEmailRequest struct {
+	// Email The email address of the user.
+	Email *openapi_types.Email `json:"email,omitempty"`
+
+	// Password The password of the user.
+	Password *string `json:"password,omitempty"`
+}
+
+// AuthRegisterPhoneNumberRequest defines model for AuthRegisterPhoneNumberRequest.
+type AuthRegisterPhoneNumberRequest struct {
+	// Password The password of the user.
+	Password *string `json:"password,omitempty"`
+
+	// PhoneNumber The phone number of the user.
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
+}
 
 // Chat defines model for Chat.
 type Chat struct {
@@ -139,6 +200,15 @@ type ChatUpdateRequest struct {
 
 	// Participants The participants in the chat.
 	Participants *[]string `json:"participants,omitempty"`
+}
+
+// ErrorGenericResponse defines model for ErrorGenericResponse.
+type ErrorGenericResponse struct {
+	// Message description of process outcome
+	Message string `json:"message"`
+
+	// Success success status of the response
+	Success bool `json:"success"`
 }
 
 // GlobalResponses defines model for GlobalResponses.
@@ -402,6 +472,28 @@ type UserCreateRequest struct {
 	Username string `json:"username"`
 }
 
+// UserCreatedResponse defines model for UserCreatedResponse.
+type UserCreatedResponse struct {
+	Data *User `json:"data,omitempty"`
+
+	// Message Registered user details (may contain arbitrary defaults)
+	Message *string `json:"message,omitempty"`
+
+	// Success Successful response
+	Success *bool `json:"success,omitempty"`
+}
+
+// UserSuccessResponse defines model for UserSuccessResponse.
+type UserSuccessResponse struct {
+	Data *User `json:"data,omitempty"`
+
+	// Message description of process outcome
+	Message *string `json:"message,omitempty"`
+
+	// Success Is the response a success response
+	Success *bool `json:"success,omitempty"`
+}
+
 // UserUpdateRequest defines model for UserUpdateRequest.
 type UserUpdateRequest struct {
 	// Bio A short biography of the user.
@@ -444,11 +536,55 @@ type UserUpdateRequest struct {
 	Username *string `json:"username,omitempty"`
 }
 
+// N400BadRequest defines model for 400BadRequest.
+type N400BadRequest = ErrorGenericResponse
+
+// N401Unauthorized defines model for 401Unauthorized.
+type N401Unauthorized = ErrorGenericResponse
+
+// N500InternalServerError defines model for 500InternalServerError.
+type N500InternalServerError = ErrorGenericResponse
+
+// AuthLoginSuccess defines model for AuthLoginSuccess.
+type AuthLoginSuccess = AuthLoginResponse
+
+// UserRegistrationSuccess defines model for UserRegistrationSuccess.
+type UserRegistrationSuccess = UserCreatedResponse
+
+// UserSuccess defines model for UserSuccess.
+type UserSuccess = UserSuccessResponse
+
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	union json.RawMessage
+}
+
+// RegisterRequest defines model for RegisterRequest.
+type RegisterRequest struct {
+	union json.RawMessage
+}
+
+// AuthLoginJSONBody defines parameters for AuthLogin.
+type AuthLoginJSONBody struct {
+	union json.RawMessage
+}
+
+// AuthRegisterJSONBody defines parameters for AuthRegister.
+type AuthRegisterJSONBody struct {
+	union json.RawMessage
+}
+
 // GetMessagesByChatIdParams defines parameters for GetMessagesByChatId.
 type GetMessagesByChatIdParams struct {
 	// ChatId The ID of the chat to retrieve messages from.
 	ChatId string `form:"chatId" json:"chatId"`
 }
+
+// AuthLoginJSONRequestBody defines body for AuthLogin for application/json ContentType.
+type AuthLoginJSONRequestBody AuthLoginJSONBody
+
+// AuthRegisterJSONRequestBody defines body for AuthRegister for application/json ContentType.
+type AuthRegisterJSONRequestBody AuthRegisterJSONBody
 
 // CreateChatGroupJSONRequestBody defines body for CreateChatGroup for application/json ContentType.
 type CreateChatGroupJSONRequestBody = ChatGroupCreateRequest
@@ -486,8 +622,141 @@ type CreateUserJSONRequestBody = UserCreateRequest
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UserUpdateRequest
 
+// AsAuthLoginEmailRequest returns the union data inside the LoginRequest as a AuthLoginEmailRequest
+func (t LoginRequest) AsAuthLoginEmailRequest() (AuthLoginEmailRequest, error) {
+	var body AuthLoginEmailRequest
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAuthLoginEmailRequest overwrites any union data inside the LoginRequest as the provided AuthLoginEmailRequest
+func (t *LoginRequest) FromAuthLoginEmailRequest(v AuthLoginEmailRequest) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAuthLoginEmailRequest performs a merge with any union data inside the LoginRequest, using the provided AuthLoginEmailRequest
+func (t *LoginRequest) MergeAuthLoginEmailRequest(v AuthLoginEmailRequest) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAuthLoginPhoneNumberRequest returns the union data inside the LoginRequest as a AuthLoginPhoneNumberRequest
+func (t LoginRequest) AsAuthLoginPhoneNumberRequest() (AuthLoginPhoneNumberRequest, error) {
+	var body AuthLoginPhoneNumberRequest
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAuthLoginPhoneNumberRequest overwrites any union data inside the LoginRequest as the provided AuthLoginPhoneNumberRequest
+func (t *LoginRequest) FromAuthLoginPhoneNumberRequest(v AuthLoginPhoneNumberRequest) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAuthLoginPhoneNumberRequest performs a merge with any union data inside the LoginRequest, using the provided AuthLoginPhoneNumberRequest
+func (t *LoginRequest) MergeAuthLoginPhoneNumberRequest(v AuthLoginPhoneNumberRequest) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t LoginRequest) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *LoginRequest) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsAuthRegisterEmailRequest returns the union data inside the RegisterRequest as a AuthRegisterEmailRequest
+func (t RegisterRequest) AsAuthRegisterEmailRequest() (AuthRegisterEmailRequest, error) {
+	var body AuthRegisterEmailRequest
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAuthRegisterEmailRequest overwrites any union data inside the RegisterRequest as the provided AuthRegisterEmailRequest
+func (t *RegisterRequest) FromAuthRegisterEmailRequest(v AuthRegisterEmailRequest) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAuthRegisterEmailRequest performs a merge with any union data inside the RegisterRequest, using the provided AuthRegisterEmailRequest
+func (t *RegisterRequest) MergeAuthRegisterEmailRequest(v AuthRegisterEmailRequest) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAuthRegisterPhoneNumberRequest returns the union data inside the RegisterRequest as a AuthRegisterPhoneNumberRequest
+func (t RegisterRequest) AsAuthRegisterPhoneNumberRequest() (AuthRegisterPhoneNumberRequest, error) {
+	var body AuthRegisterPhoneNumberRequest
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAuthRegisterPhoneNumberRequest overwrites any union data inside the RegisterRequest as the provided AuthRegisterPhoneNumberRequest
+func (t *RegisterRequest) FromAuthRegisterPhoneNumberRequest(v AuthRegisterPhoneNumberRequest) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAuthRegisterPhoneNumberRequest performs a merge with any union data inside the RegisterRequest, using the provided AuthRegisterPhoneNumberRequest
+func (t *RegisterRequest) MergeAuthRegisterPhoneNumberRequest(v AuthRegisterPhoneNumberRequest) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RegisterRequest) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RegisterRequest) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Index entry for api status
+	// (GET /)
+	Index(c *fiber.Ctx) error
+	// Logs in and returns JWT-auth-token
+	// (POST /auth/login)
+	AuthLogin(c *fiber.Ctx) error
+	// Registers and returns user information
+	// (POST /auth/register)
+	AuthRegister(c *fiber.Ctx) error
 	// Get all chat groups
 	// (GET /chatgroups)
 	GetAllChatGroups(c *fiber.Ctx) error
@@ -587,14 +856,36 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc fiber.Handler
 
+// Index operation middleware
+func (siw *ServerInterfaceWrapper) Index(c *fiber.Ctx) error {
+
+	return siw.Handler.Index(c)
+}
+
+// AuthLogin operation middleware
+func (siw *ServerInterfaceWrapper) AuthLogin(c *fiber.Ctx) error {
+
+	return siw.Handler.AuthLogin(c)
+}
+
+// AuthRegister operation middleware
+func (siw *ServerInterfaceWrapper) AuthRegister(c *fiber.Ctx) error {
+
+	return siw.Handler.AuthRegister(c)
+}
+
 // GetAllChatGroups operation middleware
 func (siw *ServerInterfaceWrapper) GetAllChatGroups(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetAllChatGroups(c)
 }
 
 // CreateChatGroup operation middleware
 func (siw *ServerInterfaceWrapper) CreateChatGroup(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateChatGroup(c)
 }
@@ -612,6 +903,8 @@ func (siw *ServerInterfaceWrapper) DeleteChatGroup(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter chatGroupId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteChatGroup(c, chatGroupId)
 }
 
@@ -627,6 +920,8 @@ func (siw *ServerInterfaceWrapper) GetChatGroupById(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter chatGroupId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetChatGroupById(c, chatGroupId)
 }
@@ -644,17 +939,23 @@ func (siw *ServerInterfaceWrapper) UpdateChatGroup(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter chatGroupId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateChatGroup(c, chatGroupId)
 }
 
 // GetAllChats operation middleware
 func (siw *ServerInterfaceWrapper) GetAllChats(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetAllChats(c)
 }
 
 // CreateChat operation middleware
 func (siw *ServerInterfaceWrapper) CreateChat(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateChat(c)
 }
@@ -672,6 +973,8 @@ func (siw *ServerInterfaceWrapper) DeleteChat(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter chatId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteChat(c, chatId)
 }
 
@@ -687,6 +990,8 @@ func (siw *ServerInterfaceWrapper) GetChatById(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter chatId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetChatById(c, chatId)
 }
@@ -704,17 +1009,23 @@ func (siw *ServerInterfaceWrapper) UpdateChat(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter chatId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateChat(c, chatId)
 }
 
 // GetAllHighlights operation middleware
 func (siw *ServerInterfaceWrapper) GetAllHighlights(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetAllHighlights(c)
 }
 
 // CreateHighlight operation middleware
 func (siw *ServerInterfaceWrapper) CreateHighlight(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateHighlight(c)
 }
@@ -732,6 +1043,8 @@ func (siw *ServerInterfaceWrapper) DeleteHighlightById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter highlightId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteHighlightById(c, highlightId)
 }
 
@@ -747,6 +1060,8 @@ func (siw *ServerInterfaceWrapper) GetHighlightById(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter highlightId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetHighlightById(c, highlightId)
 }
@@ -764,11 +1079,15 @@ func (siw *ServerInterfaceWrapper) UpdateHighlightById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter highlightId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateHighlightById(c, highlightId)
 }
 
 // UploadMedia operation middleware
 func (siw *ServerInterfaceWrapper) UploadMedia(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UploadMedia(c)
 }
@@ -786,6 +1105,8 @@ func (siw *ServerInterfaceWrapper) DeleteMedia(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter mediaId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteMedia(c, mediaId)
 }
 
@@ -802,6 +1123,8 @@ func (siw *ServerInterfaceWrapper) GetMediaById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter mediaId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetMediaById(c, mediaId)
 }
 
@@ -809,6 +1132,8 @@ func (siw *ServerInterfaceWrapper) GetMediaById(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) GetMessagesByChatId(c *fiber.Ctx) error {
 
 	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetMessagesByChatIdParams
@@ -840,6 +1165,8 @@ func (siw *ServerInterfaceWrapper) GetMessagesByChatId(c *fiber.Ctx) error {
 // SendMessage operation middleware
 func (siw *ServerInterfaceWrapper) SendMessage(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.SendMessage(c)
 }
 
@@ -855,6 +1182,8 @@ func (siw *ServerInterfaceWrapper) DeleteMessage(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter messageId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.DeleteMessage(c, messageId)
 }
@@ -872,6 +1201,8 @@ func (siw *ServerInterfaceWrapper) GetMessageById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter messageId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetMessageById(c, messageId)
 }
 
@@ -887,6 +1218,8 @@ func (siw *ServerInterfaceWrapper) UpdateMessage(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter messageId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateMessage(c, messageId)
 }
@@ -904,6 +1237,8 @@ func (siw *ServerInterfaceWrapper) GetUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter userId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetUserSettings(c, userId)
 }
 
@@ -920,17 +1255,23 @@ func (siw *ServerInterfaceWrapper) UpdateUserSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter userId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateUserSettings(c, userId)
 }
 
 // GetAllUsers operation middleware
 func (siw *ServerInterfaceWrapper) GetAllUsers(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetAllUsers(c)
 }
 
 // CreateUser operation middleware
 func (siw *ServerInterfaceWrapper) CreateUser(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateUser(c)
 }
@@ -948,6 +1289,8 @@ func (siw *ServerInterfaceWrapper) DeleteUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter userId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteUser(c, userId)
 }
 
@@ -964,6 +1307,8 @@ func (siw *ServerInterfaceWrapper) GetUserById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter userId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetUserById(c, userId)
 }
 
@@ -979,6 +1324,8 @@ func (siw *ServerInterfaceWrapper) UpdateUser(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter userId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateUser(c, userId)
 }
@@ -1003,6 +1350,12 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	for _, m := range options.Middlewares {
 		router.Use(fiber.Handler(m))
 	}
+
+	router.Get(options.BaseURL+"/", wrapper.Index)
+
+	router.Post(options.BaseURL+"/auth/login", wrapper.AuthLogin)
+
+	router.Post(options.BaseURL+"/auth/register", wrapper.AuthRegister)
 
 	router.Get(options.BaseURL+"/chatgroups", wrapper.GetAllChatGroups)
 
@@ -1064,6 +1417,119 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Put(options.BaseURL+"/users/:userId", wrapper.UpdateUser)
 
+}
+
+type N400BadRequestJSONResponse ErrorGenericResponse
+
+type N401UnauthorizedJSONResponse ErrorGenericResponse
+
+type N500InternalServerErrorJSONResponse ErrorGenericResponse
+
+type AuthLoginSuccessJSONResponse AuthLoginResponse
+
+type UserRegistrationSuccessJSONResponse UserCreatedResponse
+
+type UserSuccessJSONResponse UserSuccessResponse
+
+type IndexRequestObject struct {
+}
+
+type IndexResponseObject interface {
+	VisitIndexResponse(ctx *fiber.Ctx) error
+}
+
+type Index200JSONResponse ChatCreateRequest
+
+func (response Index200JSONResponse) VisitIndexResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
+type AuthLoginRequestObject struct {
+	Body *AuthLoginJSONRequestBody
+}
+
+type AuthLoginResponseObject interface {
+	VisitAuthLoginResponse(ctx *fiber.Ctx) error
+}
+
+type AuthLogin200JSONResponse struct{ AuthLoginSuccessJSONResponse }
+
+func (response AuthLogin200JSONResponse) VisitAuthLoginResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
+type AuthLogin400JSONResponse struct{ N400BadRequestJSONResponse }
+
+func (response AuthLogin400JSONResponse) VisitAuthLoginResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(400)
+
+	return ctx.JSON(&response)
+}
+
+type AuthLogin401JSONResponse struct{ N401UnauthorizedJSONResponse }
+
+func (response AuthLogin401JSONResponse) VisitAuthLoginResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(401)
+
+	return ctx.JSON(&response)
+}
+
+type AuthLogin500JSONResponse struct {
+	N500InternalServerErrorJSONResponse
+}
+
+func (response AuthLogin500JSONResponse) VisitAuthLoginResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(500)
+
+	return ctx.JSON(&response)
+}
+
+type AuthRegisterRequestObject struct {
+	Body *AuthRegisterJSONRequestBody
+}
+
+type AuthRegisterResponseObject interface {
+	VisitAuthRegisterResponse(ctx *fiber.Ctx) error
+}
+
+type AuthRegister201JSONResponse struct {
+	UserRegistrationSuccessJSONResponse
+}
+
+func (response AuthRegister201JSONResponse) VisitAuthRegisterResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(201)
+
+	return ctx.JSON(&response)
+}
+
+type AuthRegister400JSONResponse struct{ N400BadRequestJSONResponse }
+
+func (response AuthRegister400JSONResponse) VisitAuthRegisterResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(400)
+
+	return ctx.JSON(&response)
+}
+
+type AuthRegister500JSONResponse struct {
+	N500InternalServerErrorJSONResponse
+}
+
+func (response AuthRegister500JSONResponse) VisitAuthRegisterResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(500)
+
+	return ctx.JSON(&response)
 }
 
 type GetAllChatGroupsRequestObject struct {
@@ -2058,7 +2524,7 @@ type GetUserByIdResponseObject interface {
 	VisitGetUserByIdResponse(ctx *fiber.Ctx) error
 }
 
-type GetUserById200JSONResponse User
+type GetUserById200JSONResponse struct{ UserSuccessJSONResponse }
 
 func (response GetUserById200JSONResponse) VisitGetUserByIdResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/json")
@@ -2132,6 +2598,15 @@ func (response UpdateUser500JSONResponse) VisitUpdateUserResponse(ctx *fiber.Ctx
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Index entry for api status
+	// (GET /)
+	Index(ctx context.Context, request IndexRequestObject) (IndexResponseObject, error)
+	// Logs in and returns JWT-auth-token
+	// (POST /auth/login)
+	AuthLogin(ctx context.Context, request AuthLoginRequestObject) (AuthLoginResponseObject, error)
+	// Registers and returns user information
+	// (POST /auth/register)
+	AuthRegister(ctx context.Context, request AuthRegisterRequestObject) (AuthRegisterResponseObject, error)
 	// Get all chat groups
 	// (GET /chatgroups)
 	GetAllChatGroups(ctx context.Context, request GetAllChatGroupsRequestObject) (GetAllChatGroupsResponseObject, error)
@@ -2235,6 +2710,93 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// Index operation middleware
+func (sh *strictHandler) Index(ctx *fiber.Ctx) error {
+	var request IndexRequestObject
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.Index(ctx.UserContext(), request.(IndexRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Index")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(IndexResponseObject); ok {
+		if err := validResponse.VisitIndexResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// AuthLogin operation middleware
+func (sh *strictHandler) AuthLogin(ctx *fiber.Ctx) error {
+	var request AuthLoginRequestObject
+
+	var body AuthLoginJSONRequestBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.Body = &body
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthLogin(ctx.UserContext(), request.(AuthLoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthLogin")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(AuthLoginResponseObject); ok {
+		if err := validResponse.VisitAuthLoginResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// AuthRegister operation middleware
+func (sh *strictHandler) AuthRegister(ctx *fiber.Ctx) error {
+	var request AuthRegisterRequestObject
+
+	var body AuthRegisterJSONRequestBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.Body = &body
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthRegister(ctx.UserContext(), request.(AuthRegisterRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthRegister")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(AuthRegisterResponseObject); ok {
+		if err := validResponse.VisitAuthRegisterResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // GetAllChatGroups operation middleware
@@ -3098,66 +3660,82 @@ func (sh *strictHandler) UpdateUser(ctx *fiber.Ctx, userId string) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"J9JapZONnxb/CwAA//+dReIbWYsAAA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
