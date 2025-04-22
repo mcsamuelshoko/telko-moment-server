@@ -35,7 +35,7 @@ type UserPreferences struct {
 }
 
 type Settings struct {
-	Id          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	UserId      primitive.ObjectID `json:"userId" bson:"userId"`
 	Preferences UserPreferences    `json:"preferences" bson:"preferences"`
 	CreatedAt   time.Time          `json:"createdAt,omitempty" bson:"createdAt,omitempty"`

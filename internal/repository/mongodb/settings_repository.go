@@ -29,7 +29,7 @@ func (s settingsRepository) Create(ctx context.Context, settings *models.Setting
 		s.Logger.Error().Err(err).Msg("failed to create settings")
 		return nil, err
 	}
-	settings.Id = result.InsertedID.(primitive.ObjectID)
+	settings.ID = result.InsertedID.(primitive.ObjectID)
 	return settings, nil
 }
 
@@ -108,14 +108,14 @@ func (s settingsRepository) Update(ctx context.Context, settings *models.Setting
 	// Use the _id field from the settings model for the filter
 	// Create an update document with $set to update the settings fields
 	// Specify the options
-	filter := bson.D{{"_id", settings.Id}}
+	filter := bson.D{{"_id", settings.ID}}
 	update := bson.D{{"$set", settings}}
 	opts := options.Update().SetUpsert(false)
 
 	// Execute the update operation
 	_, err := s.Collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		s.Logger.Error().Err(err).Msg("failed to update settings with id: " + settings.Id.String())
+		s.Logger.Error().Err(err).Msg("failed to update settings with id: " + settings.ID.String())
 		return err
 	}
 
