@@ -63,5 +63,67 @@ func (s *SettingsController) GetUserSettings(c *fiber.Ctx, userId string) error 
 }
 
 func (s *SettingsController) UpdateUserSettings(c *fiber.Ctx, userId string) error {
-	return nil
+	const kName = "UpdateUserSettings"
+
+	can, status, response, err := s.isAuthorizedForSettingsResource(c, userId, services.ActionUpdate)
+	if err != nil {
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to authorize for Settings-Resource")
+		return c.Status(status).JSON(response)
+	}
+	if can {
+		settingsUpdate := new(models.Settings)
+		err := c.BodyParser(settingsUpdate)
+		if err != nil {
+			s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to retrieve user settings from request body")
+			return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Could not parse request body for settings update"))
+		}
+
+		settingsUpdate.UpdatedAt = time.Now()
+		err = s.settingsService.Update(c.Context(), settingsUpdate)
+		if err != nil {
+			s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to update user settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to update user settings"))
+		}
+
+		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(settingsUpdate, "Updated user settings"))
+	}
+
+	s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to update user settings due to unexpected error")
+	return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to update user settings due to unexpected error"))
+}
+
+func (s *SettingsController) isAuthorizedForSettingsResource(c *fiber.Ctx, userId string, action string) (bool, int, fiber.Map, error) {
+	const kName = "isAuthorizedForSettingsResource"
+	//userIDStr, ok := c.Context().Value(middleware.UserIDStrContextKey).(string)
+	//if !ok || userIDStr == "" {
+	//	//http.Error(w, "Unauthorized: Missing user identifier", http.StatusUnauthorized)
+	//	s.logger.Error().Interface(kName, s.iName).Msg("Invalid user id from context")
+	//	return false, fiber.StatusUnauthorized, utils.ErrorResponse("Missing user identifier"), errors.New("determined id is invalid")
+	//}
+	// extract user from context
+	user, ok := c.Context().Value(middleware.UserObjectContextKey).(*models.User)
+	if !ok || user.ID.Hex() != userId {
+		msg := "Failed to get user object from context"
+		s.logger.Error().Interface(kName, s.iName).Msg(msg)
+		return false, fiber.StatusInternalServerError, utils.ErrorResponse("Could not determine user context"), errors.New(msg)
+	}
+
+	settings, err := s.settingsService.GetByUserId(c.Context(), userId)
+	if err != nil {
+		msg := "Failed to get user settings"
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
+		return false, fiber.StatusInternalServerError, utils.ErrorResponse("Could not find user settings"), errors.New(msg)
+	}
+	settings.ID.Hex()
+	can, err := s.authorizationService.Can(c.Context(), user, settings, action)
+	if err != nil {
+		msg := "Failed to " + action + " user settings due to missing permissions"
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
+		return false,
+			fiber.StatusUnauthorized,
+			utils.ErrorResponse("Failed to " + action + " user settings due to missing permissions"),
+			errors.New(msg)
+	}
+
+	return can, fiber.StatusOK, nil, nil
 }
