@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/mcsamuelshoko/telko-moment-server/internal/handlers/middleware"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/services"
 	"github.com/mcsamuelshoko/telko-moment-server/pkg/utils"
 	"github.com/rs/zerolog"
+	"time"
 )
 
 type ISettingsController interface {
@@ -23,16 +26,18 @@ type ISettingsController interface {
 }
 
 type SettingsController struct {
-	iName           string
-	settingsService services.ISettingsService
-	logger          *zerolog.Logger
+	iName                string
+	settingsService      services.ISettingsService
+	authorizationService services.IAuthorizationService
+	logger               *zerolog.Logger
 }
 
-func NewSettingsController(log *zerolog.Logger, settingsSvc services.ISettingsService) ISettingsController {
+func NewSettingsController(log *zerolog.Logger, settingsSvc services.ISettingsService, authznSvc services.IAuthorizationService) ISettingsController {
 	return &SettingsController{
-		iName:           "SettingsController",
-		settingsService: settingsSvc,
-		logger:          log,
+		iName:                "SettingsController",
+		settingsService:      settingsSvc,
+		authorizationService: authznSvc,
+		logger:               log,
 	}
 }
 
