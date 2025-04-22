@@ -11,8 +11,10 @@ import (
 // ContextKey is a custom type for context keys
 type ContextKey string
 
-const UserObjectContextKey ContextKey = "userObject"
-const UserIDContextKey ContextKey = "userID" // Use primitive.ObjectID
+const (
+	UserObjectContextKey ContextKey = "userObject"
+	UserIDContextKey     ContextKey = "userID" // Use primitive.ObjectID
+)
 
 type AuthContextMiddleware struct {
 	iName    string

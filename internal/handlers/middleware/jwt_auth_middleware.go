@@ -12,7 +12,9 @@ import (
 // Use the same ContextKey type if defined elsewhere, or define it here
 // Define the key used to store the userID string from the JWT claim in the context.
 // The next middleware (AuthContextMiddleware) will pick this up.
-const UserIDStrContextKey ContextKey = "userID_str"
+const (
+	UserIDStrContextKey ContextKey = "userID_str"
+)
 
 type JWTAuthMiddleware struct {
 	iName      string
