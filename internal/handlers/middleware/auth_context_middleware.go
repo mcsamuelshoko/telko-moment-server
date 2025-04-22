@@ -32,11 +32,10 @@ func NewAuthContextMiddleware(log *zerolog.Logger, userRepo repository.IUserRepo
 
 func (acm *AuthContextMiddleware) AddUserContext() fiber.Handler {
 	const kName = "AddUserContext"
-	//return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-	acm.logger.Debug().Interface(kName, acm.iName).Msg("adding user context")
 
 	return func(c *fiber.Ctx) error {
+		acm.logger.Debug().Interface(kName, acm.iName).Msg("adding user context")
+
 		userIDStr, ok := c.Context().Value(UserIDStrContextKey).(string)
 		if !ok || userIDStr == "" {
 			//http.Error(w, "Unauthorized: Missing user identifier", http.StatusUnauthorized)

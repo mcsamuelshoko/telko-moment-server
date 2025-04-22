@@ -35,6 +35,8 @@ func NewJWTAuthMiddleware(log *zerolog.Logger, jwtService services.IJWTService) 
 func (jam *JWTAuthMiddleware) Authenticate() fiber.Handler {
 	const kName = "Authenticate"
 
+	jam.log.Debug().Interface(kName, jam.iName).Msg("authenticating user")
+
 	//return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	return func(c *fiber.Ctx) error {
 		jam.log.Debug().Interface(kName, jam.iName).Interface("params", c.AllParams()).Msg("authenticating request")
@@ -80,11 +82,12 @@ func (jam *JWTAuthMiddleware) Authenticate() fiber.Handler {
 
 			// 7. Call the next handler in the chain with the new context
 			//next.ServeHTTP(w, r.WithContext(ctx))
-			jam.log.Debug().Interface(kName, jam.iName).Interface(kName, jam.iName).
-				//Interface("claims", claims).
-				Interface("params", c.AllParams()).
-				Interface("context", c.Context().UserValue(UserIDStrContextKey)).
-				Msg("dumping claims and context-key")
+
+			//jam.log.Debug().Interface(kName, jam.iName).Interface(kName, jam.iName).
+			//	//Interface("claims", claims).
+			//	Interface("params", c.AllParams()).
+			//	Interface("context", c.Context().UserValue(UserIDStrContextKey)).
+			//	Msg("dumped claims and context-key")
 
 		} else {
 			jam.log.Warn().Interface(kName, jam.iName).Interface("Authenticate", "JWTAuthMiddleware").Bool("tokenValid", token.Valid).Msg("Token claims invalid or token is not valid")
