@@ -106,18 +106,7 @@ func main() {
 		return
 	}
 
-	settingsRepo := mongodb.NewSettingsRepository(&log, db)
-	settingsSvc := services.NewSettingsService(settingsRepo)
-	settingsCtrl := controllers.NewSettingsController(&log, settingsSvc)
-
-	userRepo := mongodb.NewUserRepository(&log, db, encryptionSvc, keyHashSvc)
-	userSvc := services.NewUserService(&log, userRepo)
-	userCtrl := controllers.NewUserController(&log, userSvc, settingsSvc)
-
-	authctRepo := mongodb.NewAuthenticationRepository(&log, db, encryptionSvc, keyHashSvc)
-	authctSvc := services.NewAuthenticationService(&log, authctRepo)
-	authctCtrl := controllers.NewAuthController(&log, userSvc, authctSvc, settingsSvc, jwtSvc)
-
+	// ::: Authorization
 	// Initialize MongoDB adapter for auth
 	authznAdapter, err := mongodbadapter.NewAdapter(cfg.MongoDB.URI + "/" + cfg.MongoDB.Database) // authorization collection is "casbin_rules"
 	if err != nil {
@@ -128,13 +117,29 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Interface(kName, iName).Msg("failed to initialize AuthorizationService")
 	}
+
 	// Load policies
 	err = authznSvc.LoadPolicies()
 	if err != nil {
 		log.Fatal().Err(err).Interface(kName, iName).Msg("failed to load authorization policies")
 	}
 
-	// Initialize middleware
+	// ::: Settings
+	settingsRepo := mongodb.NewSettingsRepository(&log, db)
+	settingsSvc := services.NewSettingsService(settingsRepo)
+	settingsCtrl := controllers.NewSettingsController(&log, settingsSvc, authznSvc)
+
+	// ::: Users
+	userRepo := mongodb.NewUserRepository(&log, db, encryptionSvc, keyHashSvc)
+	userSvc := services.NewUserService(&log, userRepo)
+	userCtrl := controllers.NewUserController(&log, userSvc, settingsSvc)
+
+	// ::: Authentication
+	authctRepo := mongodb.NewAuthenticationRepository(&log, db, encryptionSvc, keyHashSvc)
+	authctSvc := services.NewAuthenticationService(&log, authctRepo)
+	authctCtrl := controllers.NewAuthController(&log, userSvc, authctSvc, settingsSvc, jwtSvc)
+
+	// ::: Middleware
 	authctMdw := middleware.NewJWTAuthMiddleware(&log, jwtSvc)
 	authCtxMdw := middleware.NewAuthContextMiddleware(&log, userRepo)
 
