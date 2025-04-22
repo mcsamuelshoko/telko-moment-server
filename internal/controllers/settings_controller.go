@@ -59,7 +59,24 @@ func (s *SettingsController) CreateUserSettings(c *fiber.Ctx, userId string) err
 }
 
 func (s *SettingsController) GetUserSettings(c *fiber.Ctx, userId string) error {
-	return nil
+	const kName = "GetUserSettings"
+
+	// Authorize
+	can, status, response, err := s.isAuthorizedForSettingsResource(c, userId, services.ActionRead)
+	if err != nil {
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to authorize for Settings-Resource")
+		return c.Status(status).JSON(response)
+	}
+
+	if can {
+		userSettings, err := s.settingsService.GetByUserId(c.Context(), userId)
+		if err != nil {
+			s.logger.Error().Interface(kName, s.iName).Err(err).Msg("Failed to get user settings")
+			return c.Status(fiber.StatusNotFound).JSON(utils.ErrorResponse("Could not find user settings"))
+		}
+		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(userSettings, "User settings"))
+	}
+	return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to get user settings, unexpected error occurred"))
 }
 
 func (s *SettingsController) UpdateUserSettings(c *fiber.Ctx, userId string) error {
