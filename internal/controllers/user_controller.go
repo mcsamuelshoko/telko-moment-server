@@ -170,7 +170,7 @@ func (ctrl *UserController) isAuthorizedForUsersResource(c *fiber.Ctx, userId st
 		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg(msg)
 		return false, fiber.StatusNotFound, utils.ErrorResponse("Could not find requested user"), errors.New(msg)
 	}
-	userResource.ID.Hex()
+
 	can, err := ctrl.authorizationService.Can(c.Context(), user, userResource, action)
 	if err != nil {
 		msg := "Failed to " + action + " requested user due to missing permissions"
