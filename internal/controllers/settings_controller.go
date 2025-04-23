@@ -134,7 +134,7 @@ func (s *SettingsController) isAuthorizedForSettingsResource(c *fiber.Ctx, userI
 	if err != nil {
 		msg := "Failed to get user settings"
 		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
-		return false, fiber.StatusInternalServerError, utils.ErrorResponse("Could not find user settings"), errors.New(msg)
+		return false, fiber.StatusNotFound, utils.ErrorResponse("Could not find user settings"), errors.New(msg)
 	}
 	settings.ID.Hex()
 	can, err := s.authorizationService.Can(c.Context(), user, settings, action)
