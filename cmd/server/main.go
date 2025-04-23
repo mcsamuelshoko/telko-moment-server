@@ -132,7 +132,7 @@ func main() {
 	// ::: Users
 	userRepo := mongodb.NewUserRepository(&log, db, encryptionSvc, keyHashSvc)
 	userSvc := services.NewUserService(&log, userRepo)
-	userCtrl := controllers.NewUserController(&log, userSvc, settingsSvc)
+	userCtrl := controllers.NewUserController(&log, userSvc, settingsSvc, authznSvc)
 
 	// ::: Authentication
 	authctRepo := mongodb.NewAuthenticationRepository(&log, db, encryptionSvc, keyHashSvc)

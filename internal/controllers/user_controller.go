@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/mcsamuelshoko/telko-moment-server/internal/handlers/middleware"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/models"
 	"github.com/mcsamuelshoko/telko-moment-server/internal/services"
 	"github.com/mcsamuelshoko/telko-moment-server/pkg/utils"
@@ -32,20 +34,22 @@ type IUserController interface {
 }
 
 type UserController struct {
-	iName           string
-	log             *zerolog.Logger
-	userService     services.IUserService
-	settingsService services.ISettingsService
+	iName                string
+	log                  *zerolog.Logger
+	userService          services.IUserService
+	settingsService      services.ISettingsService
+	authorizationService services.IAuthorizationService
 }
 
 //var _ api.ServerInterface = (*UserController)(nil)
 
-func NewUserController(log *zerolog.Logger, service services.IUserService, settingsSvc services.ISettingsService) IUserController {
+func NewUserController(log *zerolog.Logger, service services.IUserService, settingsSvc services.ISettingsService, authznSvc services.IAuthorizationService) IUserController {
 	return &UserController{
-		iName:           "UserController",
-		userService:     service,
-		log:             log,
-		settingsService: settingsSvc,
+		iName:                "UserController",
+		userService:          service,
+		log:                  log,
+		settingsService:      settingsSvc,
+		authorizationService: authznSvc,
 	}
 }
 
