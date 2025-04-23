@@ -149,3 +149,33 @@ func (ctrl *UserController) DeleteUser(c *fiber.Ctx, userId string) error {
 
 	return c.Status(fiber.StatusNoContent).JSON(utils.SuccessResponse(nil, "User deleted"))
 }
+
+func (ctrl *UserController) isAuthorizedForUsersResource(c *fiber.Ctx, userId string, action string) (bool, int, fiber.Map, error) {
+	const kName = "isAuthorizedForSettingsResource"
+
+	user, ok := c.Context().Value(middleware.UserObjectContextKey).(*models.User)
+	if !ok || user.ID.Hex() != userId {
+		msg := "Failed to get user object from context"
+		ctrl.log.Error().Interface(kName, ctrl.iName).Msg(msg)
+		return false, fiber.StatusInternalServerError, utils.ErrorResponse("Could not determine user context"), errors.New(msg)
+	}
+
+	userResource, err := ctrl.userService.GetUserByID(c.Context(), userId)
+	if err != nil {
+		msg := "Failed to get requested user"
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg(msg)
+		return false, fiber.StatusNotFound, utils.ErrorResponse("Could not find requested user"), errors.New(msg)
+	}
+	userResource.ID.Hex()
+	can, err := ctrl.authorizationService.Can(c.Context(), user, userResource, action)
+	if err != nil {
+		msg := "Failed to " + action + " requested user due to missing permissions"
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg(msg)
+		return false,
+			fiber.StatusUnauthorized,
+			utils.ErrorResponse("Failed to " + action + " requested user due to missing permissions"),
+			errors.New(msg)
+	}
+
+	return can, fiber.StatusOK, nil, nil
+}
