@@ -11,6 +11,7 @@ type IAuthenticationService interface {
 	SaveRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error
 	GetUserIDFromRefreshToken(ctx context.Context, refreshToken string) (string, error)
 	UpdateUserRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error
+	RevokeRefreshToken(ctx context.Context, refreshToken string) error
 	DeleteRefreshToken(ctx context.Context, refreshToken string) error
 }
 
@@ -56,6 +57,15 @@ func (a AuthenticationService) UpdateUserRefreshToken(ctx context.Context, userI
 	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken, tokenDuration)
 	if err != nil {
 		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to update refresh token")
+		return err
+	}
+	return nil
+}
+func (a AuthenticationService) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
+	const kName = "RevokeRefreshToken"
+	err := a.repo.RevokeRefreshToken(ctx, refreshToken)
+	if err != nil {
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to revoke refresh token")
 		return err
 	}
 	return nil

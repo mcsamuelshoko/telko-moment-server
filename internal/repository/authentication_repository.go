@@ -17,5 +17,6 @@ type IAuthenticationRepository interface {
 
 	SaveRefreshToken(ctx context.Context, userID string, refreshToken string, tokenDuration time.Duration) error
 	GetUserIDFromRefreshToken(ctx context.Context, refreshToken string) (string, error)
+	RevokeRefreshToken(ctx context.Context, refreshToken string) error
 	DeleteRefreshToken(ctx context.Context, refreshToken string) error
 }

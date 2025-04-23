@@ -281,6 +281,64 @@ func (a AuthenticationRepository) GetUserIDFromRefreshToken(ctx context.Context,
 	return result.UserID.Hex(), nil
 }
 
+func (a AuthenticationRepository) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
+	const kName = "RevokeRefreshToken"
+
+	// Input validation
+	if refreshToken == "" {
+		a.Logger.Error().Interface(kName, a.iName).Msg("RefreshToken is empty")
+		return fmt.Errorf("refresh token cannot be empty")
+	}
+
+	// Hash token for search
+	hashedRefreshToken, err := a.SearchKeyHashSvc.GenerateSearchKey(refreshToken)
+	if err != nil {
+		a.Logger.Error().Interface(kName, a.iName).Err(err).Msg("Failed to hash refresh token")
+		return err
+	}
+	// ########### dumping log #################
+	//a.Logger.Debug().Interface(kName, a.iName).
+	//	Str("hashedRefreshToken", hashedRefreshToken).
+	//	Str("refreshToken", refreshToken).
+	//	Msg("dumped refresh token & its hash")
+
+	var result models.Authentication
+
+	// Find the token document
+	err = a.Collection.FindOne(ctx, bson.M{
+		"refreshTokenHash": hashedRefreshToken,
+		"isActive":         true, // Only match active tokens
+		"expiresAt": bson.M{
+			"$gt": time.Now(), // Only match non-expired tokens
+		},
+	}).Decode(&result)
+
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			a.Logger.Warn().Interface(kName, a.iName).Msg("No active refresh token found")
+			return fmt.Errorf("invalid or expired refresh token")
+		}
+		a.Logger.Error().Interface(kName, a.iName).Err(err).Msg("Failed to get user ID from refresh token")
+		return err
+	}
+
+	// deactivate token & expire it
+	result.IsActive = false
+	result.ExpiresAt = time.Now()
+	a.Logger.Debug().Interface(kName, a.iName).Msg("Deactivating refreshToken")
+	opts := options.FindOneAndUpdate().SetUpsert(false)
+	filter := bson.D{{"_id", result.ID}}
+	update := bson.D{{"$set", result}}
+	err = a.Collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&result)
+	if err != nil {
+		a.Logger.Error().Interface(kName, a.iName).Err(err).Msg("Failed to deactivate refresh token")
+		return err
+	}
+
+	return nil
+
+}
+
 func (a AuthenticationRepository) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
 	const kName = "DeleteRefreshToken"
 
