@@ -52,8 +52,9 @@ type IAuthorizationService interface {
 	LoadPolicies() error
 }
 
-// casbinService handles authorization using Casbin
-type casbinService struct {
+// casbinAuthorizationService handles authorization using Casbin
+type casbinAuthorizationService struct {
+	iName    string
 	logger   *zerolog.Logger
 	enforcer *casbin.Enforcer
 }
@@ -69,7 +70,8 @@ func NewCasbinAuthorizationService(log *zerolog.Logger, modelFilePath string, ad
 	// Load Policies
 	enforcer.EnableAutoSave(true)
 
-	return &casbinService{
+	return &casbinAuthorizationService{
+		iName:    "CasbinAuthorizationService",
 		logger:   log,
 		enforcer: enforcer,
 	}, nil
@@ -94,7 +96,8 @@ func NewCasbinAuthorizationService(log *zerolog.Logger, modelFilePath string, ad
 //}
 
 // LoadPolicies loads ABAC policies
-func (s *casbinService) LoadPolicies() error {
+func (s *casbinAuthorizationService) LoadPolicies() error {
+	const kName = "LoadPolicies"
 
 	var err error
 	const failedToAddErrMsg = "failed to add policy ::"
@@ -103,23 +106,23 @@ func (s *casbinService) LoadPolicies() error {
 	//if err != nil {
 	//	return err
 	//}
-	s.logger.Debug().Msg("starting policy additions")
+	s.logger.Debug().Interface(kName, s.iName).Msg("starting policy additions")
 	// User based access
 	const userBasedSubrule = "r.sub.ID.Hex() == r.obj.ID.Hex()"
 	// :::: Users Collection
 	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionRead, EffectAllow)
 	if err != nil {
-		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionRead)
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionRead)
 		return err
 	}
 	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionUpdate, EffectAllow)
 	if err != nil {
-		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionUpdate)
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionUpdate)
 		return err
 	}
 	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionDelete, EffectAllow)
 	if err != nil {
-		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionDelete)
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(failedToAddErrMsg + ResourceUsers + "-" + ActionDelete)
 		return err
 	}
 
@@ -128,13 +131,13 @@ func (s *casbinService) LoadPolicies() error {
 	// :::: Settings Collection
 	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionRead, EffectAllow)
 	if err != nil {
-		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionRead)
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionRead)
 		return err
 	}
 
 	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionUpdate, EffectAllow)
 	if err != nil {
-		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionUpdate)
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(failedToAddErrMsg + ResourceSettings + "-" + ActionUpdate)
 		return err
 	}
 
@@ -143,7 +146,7 @@ func (s *casbinService) LoadPolicies() error {
 	// :::: ChatGroups Collection
 	_, err = s.enforcer.AddPolicy(adminBasedSubrule, ResourceChatGroups, ActionAdmin, EffectAllow)
 	if err != nil {
-		s.logger.Error().Err(err).Msg(failedToAddErrMsg + ResourceChatGroups + "-" + ActionAdmin)
+		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(failedToAddErrMsg + ResourceChatGroups + "-" + ActionAdmin)
 		return err
 	}
 
@@ -158,12 +161,16 @@ func (s *casbinService) LoadPolicies() error {
 	//if err != nil {
 	//	return err
 	//}
-
+	s.logger.Debug().Interface(kName, s.iName).Msg("finished policy additions")
 	return nil
 }
 
 // Can CheckPermission checks if a user has permission to perform an action on a resource
-func (s *casbinService) Can(ctx context.Context, user *models.User, resource interface{}, action string) (bool, error) {
+func (s *casbinAuthorizationService) Can(ctx context.Context, user *models.User, resource interface{}, action string) (bool, error) {
+	const kName = "Can"
+
+	s.logger.Debug().Interface(kName, s.iName).Msg(action + " :: on user ID " + user.ID.Hex())
+
 	// For ABAC, we pass the actual objects rather than just IDs
 	allowed, err := s.enforcer.Enforce(user, resource, action)
 	if err != nil {
@@ -174,13 +181,13 @@ func (s *casbinService) Can(ctx context.Context, user *models.User, resource int
 }
 
 // AddPolicy adds a new policy rule
-func (s *casbinService) AddPolicy(subRule string, obj string, act string) error {
+func (s *casbinAuthorizationService) AddPolicy(subRule string, obj string, act string) error {
 	_, err := s.enforcer.AddPolicy(subRule, obj, act)
 	return err
 }
 
 // RemovePolicy removes a policy rule
-func (s *casbinService) RemovePolicy(subRule string, obj string, act string) error {
+func (s *casbinAuthorizationService) RemovePolicy(subRule string, obj string, act string) error {
 	_, err := s.enforcer.RemovePolicy(subRule, obj, act)
 	return err
 }
