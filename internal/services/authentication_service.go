@@ -33,7 +33,7 @@ func (a AuthenticationService) SaveRefreshToken(ctx context.Context, userID stri
 
 	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken, tokenDuration)
 	if err != nil {
-		a.log.Error().Err(err).Interface(kName, a.iName).Msg("Failed to save refresh token")
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to save refresh token")
 		return err
 	}
 	return nil
@@ -44,7 +44,7 @@ func (a AuthenticationService) GetUserIDFromRefreshToken(ctx context.Context, re
 
 	userID, err := a.repo.GetUserIDFromRefreshToken(ctx, refreshToken)
 	if err != nil {
-		a.log.Error().Err(err).Interface(kName, a.iName).Msg("Failed to get user ID from refresh token")
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to get user ID from refresh token")
 		return "", err
 	}
 	return userID, nil
@@ -55,7 +55,7 @@ func (a AuthenticationService) UpdateUserRefreshToken(ctx context.Context, userI
 
 	err := a.repo.SaveRefreshToken(ctx, userID, refreshToken, tokenDuration)
 	if err != nil {
-		a.log.Error().Err(err).Interface(kName, a.iName).Msg("Failed to update refresh token")
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to update refresh token")
 		return err
 	}
 	return nil
@@ -66,7 +66,7 @@ func (a AuthenticationService) DeleteRefreshToken(ctx context.Context, refreshTo
 
 	err := a.repo.DeleteRefreshToken(ctx, refreshToken)
 	if err != nil {
-		a.log.Error().Err(err).Interface(kName, a.iName).Msg("Failed to delete refresh token")
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to delete refresh token")
 		return err
 	}
 	return nil
