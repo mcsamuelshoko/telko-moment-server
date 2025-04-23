@@ -19,6 +19,7 @@ type IAuthenticationController interface {
 
 	Login(c *fiber.Ctx) error
 	Register(c *fiber.Ctx) error
+	Logout(c *fiber.Ctx) error
 }
 
 type AuthenticationController struct {
@@ -124,7 +125,7 @@ func (a *AuthenticationController) CancelRefreshToken(c *fiber.Ctx) error {
 	}
 
 	// Delete the refresh token from the database.
-	err = a.authService.DeleteRefreshToken(c.Context(), logoutRequest.RefreshToken) // Implement this function in your database layer.
+	err = a.authService.RevokeRefreshToken(c.Context(), logoutRequest.RefreshToken) // Implement this function in your database layer.
 	if err != nil {
 		msg := "Failed to cancel refresh token"
 		a.log.Error().Interface(kName, a.iName).Err(err).Msg(msg)
@@ -251,6 +252,27 @@ func (a *AuthenticationController) Register(c *fiber.Ctx) error {
 
 	// This code should never be reached given the previous error checks
 	return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Unexpected error"))
+}
+
+func (a *AuthenticationController) Logout(c *fiber.Ctx) error {
+	// used by logger
+	const kName = "Logout"
+
+	logoutRequest := new(models.LogoutRequest)
+	err := c.BodyParser(logoutRequest)
+	if err != nil {
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Failed to parse logout request")
+	}
+
+	// Delete the refresh token from the database.
+	err = a.authService.RevokeRefreshToken(c.Context(), logoutRequest.RefreshToken) // Implement this function in your database layer.
+	if err != nil {
+		msg := "Failed to cancel refresh token"
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg(msg)
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("failed to logout"))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(nil, "User logged out"))
 }
 
 func (a *AuthenticationController) registerUsingEmail(c *fiber.Ctx, emailRegisterRequest models.RegisterRequestEmail, err2 error, user *models.User, failedRegErrMsg string) (fiber.Map, error, int) {
