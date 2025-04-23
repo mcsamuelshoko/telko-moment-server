@@ -83,7 +83,7 @@ func (r RoutesHandler) SetupRoutes(app *fiber.App) {
 		return r.authController.UpdateRefreshToken(ctx)
 	})
 	auth.Post("/logout", func(ctx *fiber.Ctx) error {
-		return r.authController.CancelRefreshToken(ctx)
+		return r.authController.Logout(ctx)
 	})
 
 	// ::: USERS
