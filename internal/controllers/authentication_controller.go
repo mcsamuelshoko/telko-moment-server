@@ -78,7 +78,7 @@ func (a *AuthenticationController) UpdateRefreshToken(c *fiber.Ctx) error {
 
 	userID, err := a.authService.GetUserIDFromRefreshToken(c.Context(), updateRequest.RefreshToken) // Implement this function in your database layer.
 	if err != nil {
-		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Invalid or expired refresh token")
+		a.log.Error().Interface(kName, a.iName).Err(err).Msg("Invalid or expired refresh token, could not get userId from token")
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Invalid or expired refresh token"))
 	}
 
