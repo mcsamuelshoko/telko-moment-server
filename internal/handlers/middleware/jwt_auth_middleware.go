@@ -35,11 +35,8 @@ func NewJWTAuthMiddleware(log *zerolog.Logger, jwtService services.IJWTService) 
 func (jam *JWTAuthMiddleware) Authenticate() fiber.Handler {
 	const kName = "Authenticate"
 
-	jam.log.Debug().Interface(kName, jam.iName).Msg("authenticating user")
-
-	//return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	return func(c *fiber.Ctx) error {
-		jam.log.Debug().Interface(kName, jam.iName).Interface("params", c.AllParams()).Msg("authenticating request")
+		jam.log.Debug().Interface(kName, jam.iName).Msg("authenticating request")
 
 		// 1. Get the Authorization header
 		authHeader := c.Get("Authorization")
