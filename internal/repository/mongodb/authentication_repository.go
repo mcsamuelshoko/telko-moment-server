@@ -223,6 +223,12 @@ func (a AuthenticationRepository) SaveRefreshToken(ctx context.Context, userID s
 		a.Logger.Error().Interface(kName, a.iName).Err(err).Str("userID", userID).Msg("Failed to save refresh token")
 		return err
 	}
+	// ########### dumping log #################
+	//a.Logger.Debug().Interface(kName, a.iName).
+	//	Str("hashedRefreshToken", refreshTokenHash).
+	//	Str("refreshToken", refreshToken).
+	//	Msg("dumped refresh token & its hash")
+
 	return nil
 }
 
@@ -241,28 +247,34 @@ func (a AuthenticationRepository) GetUserIDFromRefreshToken(ctx context.Context,
 		a.Logger.Error().Interface(kName, a.iName).Err(err).Msg("Failed to hash refresh token")
 		return "", err
 	}
+	// ########### dumping log #################
+	//a.Logger.Debug().Interface(kName, a.iName).
+	//	Str("hashedRefreshToken", hashedRefreshToken).
+	//	Str("refreshToken", refreshToken).
+	//	Msg("dumped refresh token & its hash")
+
 	var result models.Authentication
 
 	// Find the token document
 	err = a.Collection.FindOne(ctx, bson.M{
 		"refreshTokenHash": hashedRefreshToken,
-		"is_active":        true, // Only match active tokens
-		"expires_at": bson.M{
+		"isActive":         true, // Only match active tokens
+		"expiresAt": bson.M{
 			"$gt": time.Now(), // Only match non-expired tokens
 		},
 	}).Decode(&result)
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			a.Logger.Warn().Interface(kName, a.iName).Str("refreshToken", refreshToken).Msg("No active refresh token found")
+			a.Logger.Warn().Interface(kName, a.iName).Msg("No active refresh token found")
 			return "", fmt.Errorf("invalid or expired refresh token")
 		}
-		a.Logger.Error().Interface(kName, a.iName).Err(err).Str("refreshToken", refreshToken).Msg("Failed to get user ID from refresh token")
+		a.Logger.Error().Interface(kName, a.iName).Err(err).Msg("Failed to get user ID from refresh token")
 		return "", err
 	}
 
 	if result.UserID.Hex() == "" {
-		a.Logger.Warn().Interface(kName, a.iName).Str("refreshToken", refreshToken).Msg("Refresh token found but user ID is empty")
+		a.Logger.Warn().Interface(kName, a.iName).Msg("Refresh token found but user ID is empty")
 		return "", fmt.Errorf("invalid refresh token: no user associated")
 	}
 
@@ -280,7 +292,7 @@ func (a AuthenticationRepository) DeleteRefreshToken(ctx context.Context, refres
 	}
 	_, err = a.Collection.DeleteOne(ctx, bson.M{"refreshTokenHash": hashedRefreshToken})
 	if err != nil {
-		a.Logger.Error().Interface(kName, a.iName).Err(err).Str("refreshToken", refreshToken).Msg("Failed to delete refresh token")
+		a.Logger.Error().Interface(kName, a.iName).Err(err).Msg("Failed to delete refresh token")
 		return err
 	}
 	return nil
