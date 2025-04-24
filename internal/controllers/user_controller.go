@@ -155,7 +155,7 @@ func (ctrl *UserController) DeleteUser(c *fiber.Ctx, userId string) error {
 }
 
 func (ctrl *UserController) isAuthorizedForUsersResource(c *fiber.Ctx, userId string, action string) (bool, int, fiber.Map, error) {
-	const kName = "isAuthorizedForSettingsResource"
+	const kName = "isAuthorizedForUsersResource"
 
 	user, ok := c.Context().Value(middleware.UserObjectContextKey).(*models.User)
 	if !ok || user.ID.Hex() != userId {
