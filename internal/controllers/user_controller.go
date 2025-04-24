@@ -118,12 +118,25 @@ func (ctrl *UserController) GetAllUsers(c *fiber.Ctx) error {
 func (ctrl *UserController) GetUserById(c *fiber.Ctx, userId string) error {
 	const kName = "GetUserById"
 
-	user, err := ctrl.userService.GetUserByID(c.Context(), userId)
+	can, status, response, err := ctrl.isAuthorizedForUsersResource(c, userId, services.ActionRead)
 	if err != nil {
-		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Str("userID", userId).Msg("Failed to get user")
-		return c.Status(fiber.StatusNotFound).JSON(utils.ErrorResponse("Failed to get user"))
+		ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Msg("Failed to authorize for Users-Resource")
+		return c.Status(status).JSON(response)
 	}
-	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(user.Sanitize(), "User found")) // Return the user object directly
+	if can {
+		user, err := ctrl.userService.GetUserByID(c.Context(), userId)
+		if err != nil {
+			ctrl.log.Error().Interface(kName, ctrl.iName).Err(err).Str("userID", userId).Msg("Failed to get user")
+			return c.Status(fiber.StatusNotFound).JSON(utils.ErrorResponse("Failed to get user"))
+		}
+		return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(user.Sanitize(), "User found")) // Return the user object directly
+	} else {
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.ErrorResponse("Failed to get user, not permitted"))
+	}
+
+	//ctrl.log.Error().Interface(kName, ctrl.iName).Msg("Failed to get user-by-id due to unexpected error")
+	//return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to get user due to unexpected error"))
+
 }
 
 func (ctrl *UserController) UpdateUser(c *fiber.Ctx, userId string) error {
