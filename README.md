@@ -28,6 +28,13 @@
   - White paper: [<https://arxiv.org/abs/1903.09756>]
   - ABAC : [<https://casbin.org/docs/abac>]
     - Mongodb Adapter: [<https://github.com/casbin/mongodb-adapter/>]
+- ABAC:
+  - [<https://frontegg.com/guides/abac>]
+  - [<https://learn.microsoft.com/en-us/azure/role-based-access-control/conditions-overview>]
+  - 
+
+- Govaluate 
+  - Repo : [<https://github.com/Knetic/govaluate>]
 ---
 
 
