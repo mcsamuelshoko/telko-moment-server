@@ -3,6 +3,10 @@
 > - Server to a maui mobile app for android chat-app.
 > - The server uses fiber for golang
 
+
+Chicken Jockey
+
+
 - [<https://gofiber.io/>]
   - [<https://github.com/oapi-codegen/oapi-codegen#impl-fiber>]
   - Open-API-Extensions [<https://github.com/oapi-codegen/oapi-codegen?tab=readme-ov-file#openapi-extensions>]
