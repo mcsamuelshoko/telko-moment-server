@@ -116,13 +116,7 @@ func (s *SettingsController) UpdateUserSettings(c *fiber.Ctx, userId string) err
 
 func (s *SettingsController) isAuthorizedForSettingsResource(c *fiber.Ctx, userId string, action string) (bool, int, fiber.Map, error) {
 	const kName = "isAuthorizedForSettingsResource"
-	//userIDStr, ok := c.Context().Value(middleware.UserIDStrContextKey).(string)
-	//if !ok || userIDStr == "" {
-	//	//http.Error(w, "Unauthorized: Missing user identifier", http.StatusUnauthorized)
-	//	s.logger.Error().Interface(kName, s.iName).Msg("Invalid user id from context")
-	//	return false, fiber.StatusUnauthorized, utils.ErrorResponse("Missing user identifier"), errors.New("determined id is invalid")
-	//}
-	// extract user from context
+
 	user, ok := c.Context().Value(middleware.UserObjectContextKey).(*models.User)
 	if !ok || user.ID.Hex() != userId {
 		msg := "Failed to get user object from context"
