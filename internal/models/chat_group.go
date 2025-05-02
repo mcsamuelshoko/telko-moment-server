@@ -14,5 +14,4 @@ type ChatGroup struct {
 	ProfileUrl  string               `json:"profileUrl,omitempty" bson:"profileUrl,omitempty"`
 	CreatedAt   primitive.DateTime   `json:"createdAt,omitempty" bson:"createdAt,omitempty"`
 	UpdatedAt   primitive.DateTime   `json:"updatedAt,omitempty" bson:"updatedAt,omitempty"`
-	ChatId      primitive.ObjectID   `json:"chatId" bson:"chatId"`
 }
