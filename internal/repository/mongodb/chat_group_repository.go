@@ -86,11 +86,11 @@ func (c chatGroupRepository) UpdateWithFilter(ctx context.Context, chatGroupId s
 }
 
 func (c chatGroupRepository) Update(ctx context.Context, chatGroup *models.ChatGroup) error {
-	filter := bson.M{"id": chatGroup.Id}
+	filter := bson.M{"id": chatGroup.ID}
 	update := bson.M{"$set": bson.M{}}
 	_, err := c.Collection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update chat_group with id: " + chatGroup.Id.String())
+		log.Error().Err(err).Msg("failed to update chat_group with id: " + chatGroup.ID.String())
 		return err
 	}
 	return nil
