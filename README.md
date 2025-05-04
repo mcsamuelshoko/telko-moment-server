@@ -18,7 +18,7 @@ Chicken Jockey
 - [<https://swagger.io/docs/specification/v3_0/about/>]
   - [<https://medium.com/@fikihalan/a-practical-guide-to-using-oapi-codegen-in-golang-api-development-with-the-fiber-framework-bce2a59380ae>]
 
----
+---                     
  Tools - [<https://42crunch.com/>]
  OpenAPI Spec - [<https://swagger.io/docs/specification/v3_0/basic-structure/>]
 ---
