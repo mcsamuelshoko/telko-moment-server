@@ -31,7 +31,7 @@
 > ### <ul>FeathersJs</ul>
 > Feathers Js will be also another framework of choice built on top of expressJs famous satisfactory results.
 > feathersJs will be used on the ***chat-server*** since it will deal with most of the chats and most calls will be done here.
-> Also the ***chat-server*** handles all the functions besides media, so this means user handling will also be done here.
+> Also the ***chat-server*** handles all the functions besides media, so this means auth handling will also be done here.
 > There also will be a very high usage of the ***prisma-orm*** so as to speed up the movement and the feature additions too.
 
 > As for the **Database** used will have considered a NoSql database and our choice was mongodb [check out mongodb](https://www.mongodb.com/)
