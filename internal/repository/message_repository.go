@@ -6,7 +6,7 @@ import (
 )
 
 type MessageRepository interface {
-	Create(ctx context.Context, message *models.Message) error
+	Create(ctx context.Context, message *models.Message) (*models.Message, error)
 	GetByID(ctx context.Context, id string) (*models.Message, error)
 	GetByChatID(ctx context.Context, chatId string) (*models.Message, error)
 	GetBySenderID(ctx context.Context, userId string) (*models.Message, error)

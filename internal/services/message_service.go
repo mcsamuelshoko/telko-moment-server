@@ -6,8 +6,8 @@ import (
 	"github.com/mcsamuelshoko/telko-moment-server/internal/repository"
 )
 
-type messageService interface {
-	Create(ctx context.Context, message *models.Message) error
+type IMessageService interface {
+	Create(ctx context.Context, message *models.Message) (*models.Message, error)
 	Update(ctx context.Context, message *models.Message) error
 	GetById(ctx context.Context, messageId string) (*models.Message, error)
 	GetBySenderId(ctx context.Context, userId string) (*models.Message, error)
@@ -16,16 +16,18 @@ type messageService interface {
 }
 
 type MessageService struct {
-	repo repository.MessageRepository
+	iName string
+	repo  repository.MessageRepository
 }
 
 func NewMessageService(repo repository.MessageRepository) *MessageService {
 	return &MessageService{
-		repo: repo,
+		iName: "MessageService",
+		repo:  repo,
 	}
 }
 
-func (m *MessageService) Create(ctx context.Context, message *models.Message) error {
+func (m *MessageService) Create(ctx context.Context, message *models.Message) (*models.Message, error) {
 	return m.repo.Create(ctx, message)
 }
 
