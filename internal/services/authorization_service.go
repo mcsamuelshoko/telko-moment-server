@@ -42,6 +42,14 @@ const (
 	ResourceChatGroups = "chat_groups"
 )
 
+type UserWrapper struct {
+	ID string
+}
+
+type ObjectWrapper struct {
+	UserId string
+}
+
 // IAuthorizationService checks if a user can perform an action on a resource.
 type IAuthorizationService interface {
 	// Can method checks permission. resource can be the actual model struct (*models.ChatMessage)
@@ -77,24 +85,6 @@ func NewCasbinAuthorizationService(log *zerolog.Logger, modelFilePath string, ad
 	}, nil
 }
 
-// User represents a user with attributes
-//type User struct {
-//	ID         primitive.ObjectID `bson:"_id,omitempty"`
-//	Username   string             `bson:"username"`
-//	Role       string             `bson:"role"`
-//	Department string             `bson:"department"`
-//	JoinedAt   time.Time          `bson:"joinedAt"`
-//}
-//
-//// Resource represents a resource with attributes
-//type Resource struct {
-//	ID        primitive.ObjectID `bson:"_id,omitempty"`
-//	Type      string             `bson:"type"`
-//	OwnerID   primitive.ObjectID `bson:"ownerId"`
-//	Public    bool               `bson:"public"`
-//	CreatedAt time.Time          `bson:"createdAt"`
-//}
-
 // LoadPolicies loads ABAC policies
 func (s *casbinAuthorizationService) LoadPolicies() error {
 	const kName = "LoadPolicies"
@@ -108,7 +98,7 @@ func (s *casbinAuthorizationService) LoadPolicies() error {
 	//}
 	s.logger.Debug().Interface(kName, s.iName).Msg("starting policy additions")
 	// User based access
-	const userBasedSubrule = "r.sub.ID.Hex() == r.obj.ID.Hex()"
+	const userBasedSubrule = "r.sub.ID == r.obj.ID" //"r.sub.ID.Hex() == r.obj.ID.Hex()"
 	// :::: Users Collection
 	_, err = s.enforcer.AddPolicy(userBasedSubrule, ResourceUsers, ActionRead, EffectAllow)
 	if err != nil {
@@ -127,7 +117,7 @@ func (s *casbinAuthorizationService) LoadPolicies() error {
 	}
 
 	// Owner-based access
-	const ownerBasedSubrule = "r.sub.ID.Hex() == r.obj.UserId.Hex()"
+	const ownerBasedSubrule = "r.sub.ID == r.obj.UserId"
 	// :::: Settings Collection
 	_, err = s.enforcer.AddPolicy(ownerBasedSubrule, ResourceSettings, ActionRead, EffectAllow)
 	if err != nil {
@@ -172,7 +162,7 @@ func (s *casbinAuthorizationService) Can(ctx context.Context, user *models.User,
 	s.logger.Debug().Interface(kName, s.iName).Msg(action + " :: on user ID " + user.ID.Hex())
 
 	// For ABAC, we pass the actual objects rather than just IDs
-	allowed, err := s.enforcer.Enforce(user, resource, action)
+	allowed, err := s.enforcer.Enforce(UserWrapper{ID: user.ID.Hex()}, resource, action)
 	if err != nil {
 		return false, fmt.Errorf("failed to check permission: %v", err)
 	}

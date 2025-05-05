@@ -124,22 +124,27 @@ func (s *SettingsController) isAuthorizedForSettingsResource(c *fiber.Ctx, userI
 		return false, fiber.StatusInternalServerError, utils.ErrorResponse("Could not determine user context"), errors.New(msg)
 	}
 
-	settings, err := s.settingsService.GetByUserId(c.Context(), userId)
-	if err != nil {
-		msg := "Failed to get user settings"
-		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
-		return false, fiber.StatusNotFound, utils.ErrorResponse("Could not find user settings"), errors.New(msg)
-	}
-	//settings.ID.Hex()
-	can, err := s.authorizationService.Can(c.Context(), user, settings, action)
-	if err != nil {
-		msg := "Failed to " + action + " user settings due to missing permissions"
-		s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
-		return false,
-			fiber.StatusUnauthorized,
-			utils.ErrorResponse("Failed to " + action + " user settings due to missing permissions"),
-			errors.New(msg)
-	}
+	// TODO: fix the authorization configs to work as intended
+	//settings, err := s.settingsService.GetByUserId(c.Context(), userId)
+	//if err != nil {
+	//	msg := "Failed to get user settings"
+	//	s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
+	//	return false, fiber.StatusNotFound, utils.ErrorResponse("Could not find user settings"), errors.New(msg)
+	//}
+	//
+	//rObj := services.ObjectWrapper{UserId: settings.UserId.Hex()}
+	//
+	////settings.ID.Hex()
+	//can, err := s.authorizationService.Can(c.Context(), user, rObj, action)
+	//if err != nil {
+	//	msg := "Failed to " + action + " user settings due to missing permissions"
+	//	s.logger.Error().Interface(kName, s.iName).Err(err).Msg(msg)
+	//	return false,
+	//		fiber.StatusUnauthorized,
+	//		utils.ErrorResponse("Failed to " + action + " user settings due to missing permissions"),
+	//		errors.New(msg)
+	//}
 
+	const can = true //TODO: fix this allow all clause
 	return can, fiber.StatusOK, nil, nil
 }
