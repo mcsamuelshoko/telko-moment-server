@@ -9,6 +9,34 @@ import (
 	"time"
 )
 
+// Define Settings.Preferences.AutoDownloadMedia constants
+// for the Settings Model
+const (
+	SettingsPrefAutoDownloadMediaWifi     = "wifi"
+	SettingsPrefAutoDownloadMediaCellular = "cellular"
+	SettingsPrefAutoDownloadMediaNever    = "never"
+)
+
+// Defined Settings.Preferences.LastActiveVisibility constants
+// for the Settings Model
+const (
+	SettingsPrefLastActiveVisibilityEveryone = "everyone"
+	SettingsPrefLastActiveVisibilityContacts = "contacts"
+	SettingsPrefLastActiveVisibilityNobody   = "nobody"
+)
+
+// Defined Settings.Preferences.HighlightVisibility constants
+// for the Settings Model
+const (
+	SettingsPrefHighlightVisibilityEveryone = "everyone"
+	SettingsPrefHighlightVisibilityContacts = "contacts"
+	SettingsPrefHighlightVisibilityNobody   = "nobody"
+)
+
+// Note: For other constants there is a consideration to give breathing space for the frontend/UI team
+// so they can be flexible and creative, since the constants do not affect backend or have effects on
+// the backend's functionality e.g. theme, emoji etc
+
 type UserPreferences struct {
 	Theme                string `json:"theme"`                // "light", "dark", "system"
 	Notifications        bool   `json:"notifications"`        // Enable/disable notifications
@@ -20,6 +48,7 @@ type UserPreferences struct {
 	AutoDownloadMedia    string `json:"autoDownloadMedia"`    // "wifi", "cellular", "never"
 	ReadReceipts         bool   `json:"readReceipts"`         // Enable/disable read receipts
 	LastActiveVisibility string `json:"lastActiveVisibility"` // "everyone", "contacts", "nobody"
+	HighlightVisibility  string `json:"highlightVisibility"`  // "everyone", "contacts", "nobody"
 	ChatWallpaper        string `json:"chatWallpaper"`        // Path or ID of the chat wallpaper
 	EmojiStyle           string `json:"emojiStyle"`           // "system", "apple", "google", etc.
 	Accessibility        struct {
@@ -65,10 +94,11 @@ func (s *Settings) CreateUniqueIndexes(db *mongo.Database) error {
 func GetSettingsDefaultsFromHeaders(headers map[string]string) *Settings {
 	settings := &Settings{
 		Preferences: UserPreferences{
-			AutoDownloadMedia:    "never",
+			AutoDownloadMedia:    SettingsPrefAutoDownloadMediaWifi,
 			EmojiStyle:           "system",
 			Language:             "en",
-			LastActiveVisibility: "everyone",
+			LastActiveVisibility: SettingsPrefLastActiveVisibilityEveryone,
+			HighlightVisibility:  SettingsPrefHighlightVisibilityEveryone,
 			Notifications:        true,
 			ReadReceipts:         true,
 			Sound:                true,
