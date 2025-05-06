@@ -10,6 +10,15 @@ import (
 	"time"
 )
 
+// Define User-Status constants
+const (
+	UserStatusActive      = "active"
+	UserStatusInactive    = "inactive"
+	UserStatusDeleted     = "deleted"
+	UserStatusDeactivated = "deactivated"
+	UserStatusBanned      = "banned"
+)
+
 type User struct {
 	ID                 primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	FirstName          string             `json:"firstName" bson:"firstName"`
