@@ -81,6 +81,7 @@ func main() {
 	db := client.Database(cfg.MongoDB.Database)
 
 	// Create initial indexes
+	// ::: Indexes
 	err = internalmongodb.CreateInitialIndexes(db, &log)
 	if err != nil {
 		log.Fatal().Err(err).Interface(kName, iName).Msg("Failed to create initial indexes")
