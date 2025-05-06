@@ -17,6 +17,7 @@ type RoutesHandler struct {
 	userController     controllers.IUserController
 	settingsController controllers.ISettingsController
 	authController     controllers.IAuthenticationController
+	msgController      controllers.IMessageController
 }
 
 // NewRoutesHandler creates a new RoutesHandler instance.
@@ -27,6 +28,7 @@ func NewRoutesHandler(
 	userController controllers.IUserController,
 	settingsController controllers.ISettingsController,
 	authController controllers.IAuthenticationController,
+	msgController controllers.IMessageController,
 ) *RoutesHandler {
 
 	return &RoutesHandler{
@@ -37,6 +39,7 @@ func NewRoutesHandler(
 		settingsController: settingsController,
 		authController:     authController,
 		authCtxMiddleware:  authCtxMiddleware,
+		msgController:      msgController,
 	}
 }
 
@@ -206,26 +209,6 @@ func (r RoutesHandler) GetMessagesByChatId(c *fiber.Ctx, params api.GetMessagesB
 	panic("implement me")
 }
 
-func (r RoutesHandler) SendMessage(c *fiber.Ctx) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r RoutesHandler) DeleteMessage(c *fiber.Ctx, messageId string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r RoutesHandler) GetMessageById(c *fiber.Ctx, messageId string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r RoutesHandler) UpdateMessage(c *fiber.Ctx, messageId string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
 // ::::::::::::::::::::::::::::::  ROUTES ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 // :::: ENTRY -or- INDEX
@@ -278,4 +261,22 @@ func (r RoutesHandler) GetUserById(c *fiber.Ctx, userId string) error {
 
 func (r RoutesHandler) UpdateUser(c *fiber.Ctx, userId string) error {
 	return r.userController.UpdateUser(c, userId)
+}
+
+// :::: MESSAGES
+
+func (r RoutesHandler) SendMessage(c *fiber.Ctx) error {
+	return r.msgController.CreateMessage(c)
+}
+
+func (r RoutesHandler) DeleteMessage(c *fiber.Ctx, messageId string) error {
+	return r.msgController.DeleteMessage(c, messageId)
+}
+
+func (r RoutesHandler) GetMessageById(c *fiber.Ctx, messageId string) error {
+	return r.msgController.GetMessageById(c, messageId)
+}
+
+func (r RoutesHandler) UpdateMessage(c *fiber.Ctx, messageId string) error {
+	return r.msgController.UpdateMessage(c, messageId)
 }
