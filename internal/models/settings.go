@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Define Settings.Preferences.AutoDownloadMedia constants
+// Defined Settings.Preferences.AutoDownloadMedia constants
 // for the Settings Model
 const (
 	SettingsPrefAutoDownloadMediaWifi     = "wifi"
