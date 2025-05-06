@@ -139,6 +139,11 @@ func main() {
 	authctSvc := services.NewAuthenticationService(&log, authctRepo)
 	authctCtrl := controllers.NewAuthController(&log, userSvc, authctSvc, settingsSvc, jwtSvc)
 
+	// ::: Messages
+	msgRepo := mongodb.NewMessageRepository(&log, db)
+	msgSvc := services.NewMessageService(msgRepo)
+	msgCtrl := controllers.NewMessageController(&log, msgSvc)
+
 	// ::: Middleware
 	authctMdw := middleware.NewJWTAuthMiddleware(&log, jwtSvc)
 	authCtxMdw := middleware.NewAuthContextMiddleware(&log, userRepo)
@@ -159,7 +164,7 @@ func main() {
 	//app.Get("/metrics", monitor.New())	// Initialize default config (Assign the middleware to /metrics)
 
 	// Setup routes
-	routesHandler := handlers.NewRoutesHandler(&log, authctMdw, authCtxMdw, userCtrl, settingsCtrl, authctCtrl)
+	routesHandler := handlers.NewRoutesHandler(&log, authctMdw, authCtxMdw, userCtrl, settingsCtrl, authctCtrl, msgCtrl)
 	routesHandler.SetupRoutes(app) // layered
 
 	// handle swagger routes
