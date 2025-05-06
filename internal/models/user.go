@@ -10,7 +10,8 @@ import (
 	"time"
 )
 
-// Define User-Status constants
+// Defined User.Status constants
+// for the User Model
 const (
 	UserStatusActive      = "active"
 	UserStatusInactive    = "inactive"
@@ -257,7 +258,7 @@ func (u *User) Sanitize() map[string]interface{} {
 // GetUserDefaultsFromHeaders Get user defaults from request headers
 func GetUserDefaultsFromHeaders(headers map[string]string) *User {
 	user := &User{
-		Status:             "active",
+		Status:             UserStatusActive,
 		LanguagePreference: "en",
 		UserType:           "regular",
 		CreatedAt:          time.Now(),
