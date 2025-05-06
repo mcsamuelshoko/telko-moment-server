@@ -36,20 +36,16 @@ type IMessageController interface {
 }
 
 type MessageController struct {
-	iName                string
-	logger               *zerolog.Logger
-	userService          services.IUserService
-	messageService       services.IMessageService
-	authorizationService services.IAuthorizationService
+	iName          string
+	logger         *zerolog.Logger
+	messageService services.IMessageService
 }
 
-func NewMessageController(log *zerolog.Logger, userSvc services.IUserService, messageSvc services.IMessageService, authznSvc services.IAuthorizationService) IMessageController {
+func NewMessageController(log *zerolog.Logger, messageSvc services.IMessageService) IMessageController {
 	return &MessageController{
-		iName:                "MessageController",
-		logger:               log,
-		userService:          userSvc,
-		messageService:       messageSvc,
-		authorizationService: authznSvc,
+		iName:          "MessageController",
+		logger:         log,
+		messageService: messageSvc,
 	}
 }
 
