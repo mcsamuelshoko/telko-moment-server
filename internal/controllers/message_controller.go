@@ -73,7 +73,8 @@ func (m MessageController) CreateMessage(c *fiber.Ctx) error {
 func (m MessageController) GetAllMessages(c *fiber.Ctx) error {
 	const kName = "GetAllMessages"
 
-	return nil
+	//TODO implement me
+	panic("implement me")
 }
 
 func (m MessageController) GetMessageById(c *fiber.Ctx, messageId string) error {
@@ -126,5 +127,5 @@ func (m MessageController) DeleteMessage(c *fiber.Ctx, messageId string) error {
 		m.logger.Error().Interface(kName, m.iName).Err(err).Msg("Failed to delete message")
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.ErrorResponse("Failed to delete message"))
 	}
-	return c.Status(fiber.StatusAccepted).JSON(utils.SuccessResponse(nil, "Message Deleted"))
+	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse(nil, "Message Deleted"))
 }
