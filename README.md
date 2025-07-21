@@ -4,6 +4,48 @@
 > - The server uses fiber for golang
 
 
+|   | List of topics                      |
+|---|:------------------------------------|
+|  | [System Diagrams](#system-diagrams) |
+|  | [Miscellaneous](#miscellaneous)     |
+| | [Requirements](#requirements) |
+| | [Folder Structure](#folder-structure) |
+
+
+
+## System Diagrams (C4)
+
+
+### System Context
+
+```mermaid
+---
+title:"Main System Overview"
+---
+flowchart TD
+    User["Premium User
+    [Person]
+    
+    A user of the platform that purchased a subscription"]
+    
+    TS["Telko-Momment Service
+    [Software System]
+    
+    Provides an API to use telko-messenger apps
+    "]
+    
+    User --" Sends messages, receives messages,\nand views higlights using"--> TS
+    
+    classDef person fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef focusSystem fill:#1168bd,stroke:#0b4884,color:#ffffff
+    
+    class User person
+    class TS focusSystem
+```
+
+
+## Miscellaneous 
+
 - [<https://gofiber.io/>]
   - [<https://github.com/oapi-codegen/oapi-codegen#impl-fiber>]
   - Open-API-Extensions [<https://github.com/oapi-codegen/oapi-codegen?tab=readme-ov-file#openapi-extensions>]
